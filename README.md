@@ -67,6 +67,7 @@ The drawing uses functional input/output labels rather than literal terminal cou
 
 - `pi/`: USB camera processing, person/heart recognition, latest-frame capture and BLE client.
 - `firebeetle/`: four-LED/voice firmware, state machine, sensor readers, audio clips and C++ tests.
+- `mac-backup/`: demo-day fallback — Swift/Apple Vision app for a MacBook that replaces the Pi's vision step and sends the same BLE commands (see `mac-backup/README.md`).
 - `hardware-tests/`: standalone diagnostic programs, including 100 ms raw water logging.
 - `cad/`: enclosure source scripts and schedules.
 - `schematic.py`, `img/`: report circuit diagram and generator.
