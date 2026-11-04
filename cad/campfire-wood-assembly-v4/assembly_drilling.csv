@@ -1,0 +1,25 @@
+part,hole,u_mm,v_mm,diameter_mm,fastener
+Base,H01,11,11,3.5,3 x 20 mm wood screw; into corner post
+Base,H02,319,11,3.5,3 x 20 mm wood screw; into corner post
+Base,H03,11,219,3.5,3 x 20 mm wood screw; into corner post
+Base,H04,319,219,3.5,3 x 20 mm wood screw; into corner post
+Roof,H01,11,11,3.5,3 x 20 mm wood screw; removable
+Roof,H02,319,11,3.5,3 x 20 mm wood screw; removable
+Roof,H03,11,219,3.5,3 x 20 mm wood screw; removable
+Roof,H04,319,219,3.5,3 x 20 mm wood screw; removable
+Front,H01,11,34,3.5,3 x 12 mm wood screw; removable
+Front,H02,11,324,3.5,3 x 12 mm wood screw; removable
+Front,H03,319,34,3.5,3 x 12 mm wood screw; removable
+Front,H04,319,324,3.5,3 x 12 mm wood screw; removable
+Back,H01,11,114,3.5,3 x 12 mm wood screw
+Back,H02,11,234,3.5,3 x 12 mm wood screw
+Back,H03,319,114,3.5,3 x 12 mm wood screw
+Back,H04,319,234,3.5,3 x 12 mm wood screw
+Left,H01,4.8,74,3.5,3 x 12 mm wood screw
+Left,H02,4.8,274,3.5,3 x 12 mm wood screw
+Left,H03,212.8,74,3.5,3 x 12 mm wood screw
+Left,H04,212.8,274,3.5,3 x 12 mm wood screw
+Right,H01,4.8,74,3.5,3 x 12 mm wood screw
+Right,H02,4.8,274,3.5,3 x 12 mm wood screw
+Right,H03,212.8,74,3.5,3 x 12 mm wood screw
+Right,H04,212.8,274,3.5,3 x 12 mm wood screw

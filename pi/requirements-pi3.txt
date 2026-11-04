@@ -1,0 +1,10 @@
+# Raspberry Pi 3B+: CPython 3.11, Linux ARM64.
+# MediaPipe 1.1.0 aborts on this CPU because its binary requires AES instructions.
+# These versions loaded the models and processed a USB-camera stream on 2026-10-22.
+# This confirms runtime compatibility, not acceptable real-time performance.
+numpy==1.26.4
+opencv-contrib-python==4.11.0.86
+mediapipe==0.10.18
+bleak==3.0.2
+jax==0.4.35
+jaxlib==0.4.35

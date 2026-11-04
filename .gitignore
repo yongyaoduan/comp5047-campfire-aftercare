@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pio/
+.build/
+build/
+.DS_Store
+.env
+.env.*
+models/
+recording/
+*.log
+*.pid

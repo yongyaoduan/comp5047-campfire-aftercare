@@ -1,0 +1,4 @@
+part,qty,width_mm,height_mm,thickness_mm,notes
+base / roof,2,330,230,6,roof only: diameter190 at x220 y115; 4 holes radius100 at45/135/225/315deg
+front / back,2,330,373.6,6,front removable; no horizontal seam in wood
+left / right,2,217.6,373.6,6,between front and back

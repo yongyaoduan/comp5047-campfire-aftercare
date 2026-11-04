@@ -1,0 +1,6 @@
+Part,Qty,Width,Height_or_length,Thickness,Units
+Base,1,330,230,6,mm
+Roof,1,330,230,6,mm
+Front / Back,2,330,373.6,6,mm
+Left / Right,2,217.6,373.6,6,mm
+Corner post,4,10,374,10,mm

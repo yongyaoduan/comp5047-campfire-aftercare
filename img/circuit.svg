@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 720" font-family="Helvetica, Arial, sans-serif" font-size="14">
+  <rect width="1100" height="720" fill="#fff"/>
+  <text x="550" y="32" text-anchor="middle" font-size="20" font-weight="bold">Campfire Aftercare — wiring (FireBeetle 2 ESP32-E)</text>
+
+  <!-- Pi block -->
+  <rect x="40" y="70" width="220" height="110" rx="8" fill="#eef3fb" stroke="#36c" stroke-width="2"/>
+  <text x="150" y="98" text-anchor="middle" font-weight="bold">Raspberry Pi 3B+</text>
+  <text x="150" y="120" text-anchor="middle">MediaPipe (local)</text>
+  <text x="150" y="140" text-anchor="middle">own 5 V supply</text>
+  <rect x="70" y="200" width="160" height="50" rx="6" fill="#eef3fb" stroke="#36c"/>
+  <text x="150" y="230" text-anchor="middle">Brio 100 webcam</text>
+  <line x1="150" y1="180" x2="150" y2="200" stroke="#36c" stroke-width="2"/>
+  <text x="160" y="194" font-size="12" fill="#36c">USB</text>
+  <path d="M260 125 C 340 125, 530 150, 530 230" fill="none" stroke="#36c" stroke-width="2" stroke-dasharray="7 5"/>
+  <text x="290" y="200" fill="#36c" font-size="13">Bluetooth LE</text>
+  <text x="290" y="217" fill="#36c" font-size="12">person / heart bytes</text>
+
+  <!-- FireBeetle -->
+  <rect x="400" y="230" width="260" height="330" rx="8" fill="#f4f4f4" stroke="#222" stroke-width="2.5"/>
+  <text x="530" y="258" text-anchor="middle" font-weight="bold" font-size="16">FireBeetle 2 ESP32-E</text>
+  <text x="530" y="278" text-anchor="middle" font-size="12">USB 5 V power</text>
+  <g font-size="13">
+    <text x="410" y="315">3V3</text><text x="410" y="345">GND</text>
+    <text x="410" y="385">GPIO21 SDA</text><text x="410" y="410">GPIO22 SCL</text>
+    <text x="410" y="460">GPIO26</text><text x="410" y="520">GPIO25 DAC</text>
+    <text x="650" y="315" text-anchor="end">GPIO14</text><text x="650" y="355" text-anchor="end">GPIO13</text>
+    <text x="650" y="395" text-anchor="end">GPIO27</text><text x="650" y="435" text-anchor="end">GPIO4</text>
+    <text x="650" y="475" text-anchor="end">GND</text>
+  </g>
+
+  <!-- LEDs right -->
+  <g stroke="#222" stroke-width="2" fill="none">
+    <line x1="660" y1="310" x2="700" y2="310"/><line x1="660" y1="350" x2="700" y2="350"/>
+    <line x1="660" y1="390" x2="700" y2="390"/><line x1="660" y1="430" x2="700" y2="430"/>
+  </g>
+  <g>
+    <rect x="700" y="302" width="60" height="16" fill="#fff" stroke="#222"/><text x="730" y="315" text-anchor="middle" font-size="11">330 Ω</text>
+    <rect x="700" y="342" width="60" height="16" fill="#fff" stroke="#222"/><text x="730" y="355" text-anchor="middle" font-size="11">330 Ω</text>
+    <rect x="700" y="382" width="60" height="16" fill="#fff" stroke="#222"/><text x="730" y="395" text-anchor="middle" font-size="11">330 Ω</text>
+    <rect x="700" y="422" width="60" height="16" fill="#fff" stroke="#222"/><text x="730" y="435" text-anchor="middle" font-size="11">330 Ω</text>
+  </g>
+  <g stroke="#222" stroke-width="2">
+    <line x1="760" y1="310" x2="790" y2="310"/><line x1="760" y1="350" x2="790" y2="350"/>
+    <line x1="760" y1="390" x2="790" y2="390"/><line x1="760" y1="430" x2="790" y2="430"/>
+  </g>
+  <circle cx="805" cy="310" r="13" fill="#3a3" stroke="#222"/>
+  <circle cx="805" cy="350" r="13" fill="#ec3" stroke="#222"/>
+  <circle cx="805" cy="390" r="13" fill="#d33" stroke="#222"/>
+  <circle cx="805" cy="430" r="13" fill="#36d" stroke="#222"/>
+  <g font-size="13">
+    <text x="855" y="315">Green — person in view</text>
+    <text x="855" y="355">Yellow — tank low</text>
+    <text x="855" y="395">Red — bowl ≥ 45 °C</text>
+    <text x="855" y="435">Blue — heart recognised</text>
+  </g>
+  <g stroke="#222" stroke-width="2">
+    <line x1="818" y1="310" x2="840" y2="310"/><line x1="818" y1="350" x2="840" y2="350"/><line x1="818" y1="390" x2="840" y2="390"/><line x1="818" y1="430" x2="840" y2="430"/>
+    <line x1="660" y1="470" x2="840" y2="470"/>
+    <line x1="840" y1="310" x2="840" y2="470"/>
+  </g>
+  <text x="850" y="488" font-size="12">LED cathodes → common GND rail</text>
+
+  <!-- Sensors left -->
+  <rect x="40" y="340" width="200" height="50" rx="6" fill="#fff6e8" stroke="#c80"/>
+  <text x="140" y="362" text-anchor="middle" font-weight="bold">SEN0206 MLX90614</text>
+  <text x="140" y="380" text-anchor="middle" font-size="12">IR thermometer · I²C 0x5A</text>
+  <rect x="40" y="400" width="200" height="50" rx="6" fill="#fff6e8" stroke="#c80"/>
+  <text x="140" y="422" text-anchor="middle" font-weight="bold">Grove water level 10 cm</text>
+  <text x="140" y="440" text-anchor="middle" font-size="12">I²C 0x77 / 0x78</text>
+  <g stroke="#c80" stroke-width="2" fill="none">
+    <path d="M240 365 H320 V380 H400"/><path d="M240 425 H320 V405 H400"/>
+    <path d="M320 365 V310 H400"/><path d="M320 340 H400"/>
+  </g>
+  <text x="40" y="330" font-size="12" fill="#c80">VCC→3V3 · GND · SDA · SCL (shared I²C bus)</text>
+
+  <!-- Pump -->
+  <rect x="150" y="480" width="170" height="60" rx="6" fill="#eaf7ee" stroke="#282"/>
+  <text x="235" y="505" text-anchor="middle" font-weight="bold">DFR0457 MOSFET</text>
+  <text x="235" y="525" text-anchor="middle" font-size="12">ctrl: 3V3 · GND · signal</text>
+  <path d="M400 455 H350 V500 H320" fill="none" stroke="#282" stroke-width="2"/>
+  <rect x="20" y="600" width="140" height="50" rx="6" fill="#fff" stroke="#282"/>
+  <text x="90" y="622" text-anchor="middle" font-weight="bold">12 V 2 A plug pack</text>
+  <text x="90" y="640" text-anchor="middle" font-size="12">pump only</text>
+  <rect x="220" y="600" width="170" height="50" rx="6" fill="#fff" stroke="#282"/>
+  <text x="305" y="622" text-anchor="middle" font-weight="bold">FIT0563 pump</text>
+  <text x="305" y="640" text-anchor="middle" font-size="12">+ Schottky across (band to +)</text>
+  <path d="M90 600 V560 H190 V540" fill="none" stroke="#282" stroke-width="2"/>
+  <text x="95" y="575" font-size="12" fill="#282">VIN</text>
+  <path d="M280 540 V600" fill="none" stroke="#282" stroke-width="2"/>
+  <text x="285" y="575" font-size="12" fill="#282">VOUT</text>
+
+  <!-- Audio -->
+  <path d="M400 515 H380 V600 H470" fill="none" stroke="#83c" stroke-width="2"/>
+  <rect x="470" y="590" width="60" height="18" fill="#fff" stroke="#83c"/><text x="500" y="603" text-anchor="middle" font-size="11">10 kΩ</text>
+  <line x1="530" y1="599" x2="580" y2="599" stroke="#83c" stroke-width="2"/>
+  <line x1="555" y1="599" x2="555" y2="625" stroke="#83c" stroke-width="2"/>
+  <rect x="525" y="625" width="60" height="18" fill="#fff" stroke="#83c"/><text x="555" y="638" text-anchor="middle" font-size="11">1 kΩ</text>
+  <text x="555" y="665" text-anchor="middle" font-size="12">→ GND</text>
+  <rect x="580" y="575" width="150" height="55" rx="6" fill="#f5eefc" stroke="#83c"/>
+  <text x="655" y="598" text-anchor="middle" font-weight="bold">PAM8302 amp</text>
+  <text x="655" y="617" text-anchor="middle" font-size="12">VCC/GND from board</text>
+  <line x1="730" y1="602" x2="790" y2="602" stroke="#83c" stroke-width="2"/>
+  <rect x="790" y="577" width="150" height="50" rx="6" fill="#fff" stroke="#83c"/>
+  <text x="865" y="600" text-anchor="middle" font-weight="bold">8 Ω 5 W speaker</text>
+  <text x="865" y="618" text-anchor="middle" font-size="12">voice + alarm tone</text>
+
+  <text x="550" y="700" text-anchor="middle" font-size="12" fill="#555">12 V never touches the FireBeetle. FireBeetle and MOSFET control side share GND. Speaker − is not grounded.</text>
+</svg>

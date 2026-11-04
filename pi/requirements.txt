@@ -1,0 +1,4 @@
+# Raspberry Pi OS 64-bit (Bookworm or newer), Python 3.11+
+mediapipe==1.1.0
+opencv-contrib-python==4.13.0.92
+bleak==3.0.2

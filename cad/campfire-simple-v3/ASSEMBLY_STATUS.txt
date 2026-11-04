@@ -1,0 +1,1 @@
+V3 full-print assembly is NOT fabrication-verified. Corner bracket/panel hole offsets were found during assembly audit. See ../campfire-wood-assembly-v4/ for the revised plywood assembly. Do not treat V3 mesh checks as proof of assembly fit.

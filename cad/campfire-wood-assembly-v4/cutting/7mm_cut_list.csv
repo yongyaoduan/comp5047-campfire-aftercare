@@ -1,0 +1,8 @@
+part,width_mm,height_mm,thickness_mm,board_origin_x,board_origin_y
+FRONT,330,371.6,7,5,5
+BACK,330,371.6,7,338,5
+LEFT,215.6,371.6,7,671,5
+RIGHT,215.6,371.6,7,889.6,5
+BASE,330,230,7,5,379.6
+TOP,330,230,7,338,379.6
+CORNER_POST x4,10,372,10,separate square timber,
