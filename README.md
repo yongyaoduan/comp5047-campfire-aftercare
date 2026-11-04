@@ -89,6 +89,10 @@ python app.py --profile pi3 --max-people 1
 
 Model downloads are versioned and SHA-256 checked. The USB webcam must be connected to the Pi. The BLE peripheral advertises `Campfire-FireBeetle`. Inference speed and supply stability must be checked on the actual Pi; simulation tests do not verify live camera or BLE operation.
 
+### Start on boot
+
+Copy `pi/campfire.service` to `/etc/systemd/system/` on the Pi, then `sudo systemctl daemon-reload && sudo systemctl enable --now campfire`. It runs `app.py --profile pi3 --max-people 1` after every power-up and restarts it if it stops (`journalctl -u campfire -f` for logs; `sudo systemctl stop campfire` before a manual run).
+
 ## FireBeetle build and upload
 
 Install PlatformIO, connect FireBeetle 2 ESP32-E, then:
