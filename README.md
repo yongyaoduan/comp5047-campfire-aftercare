@@ -8,7 +8,7 @@ Raspberry Pi vision and Bluetooth LE, FireBeetle ESP32-E four-LED control, spoke
 |---|---|
 | Green / GPIO14 | Person detected |
 | Yellow / GPIO13 | Low tank level |
-| Red / GPIO27 | Object temperature at least 45°C |
+| Red / GPIO27 | Fire: object temperature reaches 45°C, stays on until it falls below 40°C |
 | Blue / GPIO4 | Two-hand heart recognised; remains on while held |
 | Audio / GPIO25 DAC1 | Spoken prompts and alarm |
 | Pump / GPIO26 | MOSFET control signal |
@@ -17,21 +17,25 @@ Raspberry Pi vision and Bluetooth LE, FireBeetle ESP32-E four-LED control, spoke
 
 The committed English WAV files and flash-resident samples are generated with macOS Samantha at 155 words/minute:
 
-- [I need more water.](firebeetle/audio/water.wav) — repeats every 5 seconds while the tank is low and someone is in view.
-- [The fire is burning. Show me a heart, I'll put it out.](firebeetle/audio/fire.wav) — when a person attends a hot bowl.
-- [I love you.](firebeetle/audio/love.wav) — on a new heart gesture.
+- [I need some water.](firebeetle/audio/water.wav) — repeats every 5 seconds while the tank is low and someone is in view.
+- [The fire is burning. Show me a heart, I will put it out.](firebeetle/audio/fire.wav) — once, when someone comes back during the alarm or an automatic spray.
+- [I love you too.](firebeetle/audio/love.wav) — once per new heart gesture.
+- [Putting the fire out.](firebeetle/audio/spray.wav) — once, when an automatic spray starts.
 
 Playback is offline. The WAV files and generated `AudioSamples.h` are included; macOS is needed only to regenerate them. Audio runs through I2S DMA on GPIO25 in its own task, independently of the control loop and sensor reads. An alarm interrupts speech. A due low-water warning takes priority over another spoken prompt.
 
 ## Control sequence
 
-1. No heat (below 45°C): monitor; no pump or alarm. A heart can still light blue and trigger its spoken response.
-2. Hot and attended: ask for a heart. A newly recognised heart authorises spraying until the bowl cools, provided water and sensor readings remain valid.
-3. Hot and unattended: wait 20 seconds, then alarm for 5 seconds / pause for 5 seconds, three times. After the final pause (50 seconds from the start of absence), spray if still unattended and hot.
-4. A returning person stops an alarm or automatic spray and receives the fire prompt. Leaving a manual spray cancels that consent and starts a new unattended grace period.
-5. Low water blocks every spray. Invalid/stale water or temperature readings also block spraying. BLE disconnect, stale command stream, or STOP cancels spraying and resets the sequence. A stale camera sends STOP instead of claiming the campsite is empty.
+1. No fire: no sound, no pump; timers reset. A heart still lights blue and plays "I love you too".
+2. Fire with people in view is normal use: no sound, no pump.
+3. **A heart works at any time.** While any visible person holds a two-hand heart and the bowl is hot, the pump runs; it stops the moment the hands drop (the BLE heart message expires 0.8 s after the last heartbeat; with the Pi 3B+ at ~1 FPS the observed stop is about 2 s after the hands actually drop).
+4. Fire with nobody in view (including nobody ever seen): wait 20 s silently. Coming back within 20 s: nothing happens.
+5. Then alarm 5 s on / 5 s off, at most three times. Coming back during the alarm stops it and plays the fire prompt once; after that it is normal use.
+6. Nobody back after the third pause (50 s from absence): "Putting the fire out", then spray until the bowl falls below 40°C. A person walking in without a heart stops the pump immediately.
+7. Low water blocks every spray but never silences the station: with someone in view it asks for water; with nobody in view the alarm keeps repeating.
+8. Re-ignition after an automatic spray restarts the cycle at step 4. Invalid/stale sensor readings, BLE disconnect, stale command stream, or STOP block spraying and reset the sequence.
 
-Releasing a heart turns blue off; the authorised attended spray continues until cool, low water, loss of the person, or a stop condition. This implements the report's “until cooled” behaviour rather than requiring the gesture to be held throughout spraying.
+Fire detection uses hysteresis (on at 45°C, off below 40°C) so the pump does not chatter around one threshold. The Pi always looks for at least four hands, so any visible person's heart counts even with `--max-people 1`.
 
 Temperature and water are sampled in a separate task roughly every 250 ms, so cooling is checked more frequently than the report's 5-second requirement. The water threshold is the reference raw value >100; two valid samples settle wet/dry. Isolated upper drops are ignored for height, but a film on the bottom segment can still look like water. Water-height precision is not 100 ms: that is a diagnostic polling interval, not measurement accuracy.
 
@@ -95,7 +99,7 @@ pio run -d firebeetle -t upload --upload-port YOUR_SERIAL_PORT
 pio device monitor --port YOUR_SERIAL_PORT --baud 115200
 ```
 
-BLE accepts raw one-byte values: `0` absent, `1` present, `4` heart held, `5` heart released, `6` STOP. USB serial accepts those ASCII digits. USB commands expire unless refreshed; the Pi refreshes commands automatically. Serial `w`, `f`, `l` tests the three voice clips without intentionally enabling the pump.
+BLE accepts raw one-byte values: `0` absent, `1` present, `4` heart held, `5` heart released, `6` STOP. USB serial accepts those ASCII digits. USB commands expire unless refreshed; the Pi refreshes commands automatically. Serial `w`, `f`, `l`, `p` tests the four voice clips without intentionally enabling the pump.
 
 The physical pump requires a MOSFET module and independent 12V supply. Diagnostic GPIO26 blink/wiring programs can activate the attached pump; use the appropriate firmware for the connected hardware.
 
@@ -108,7 +112,7 @@ c++ -std=c++11 firebeetle/tests/control_test.cpp -o /tmp/campfire-control-test
 pio run -d firebeetle
 ```
 
-Tests cover LED states during pumping, manual consent, absent-person timing, return cancellation, dry/unknown-water lockout, cooling, communication loss, time wraparound, and camera/gesture policies. They do not constitute a physical water-flow, acoustic clarity, or end-to-end hardware test. This four-LED/voice build has been compiled and simulation-tested, and has not been uploaded to the physical board in this session.
+Tests cover LED states during pumping, heart-held spraying, absent-person timing, return cancellation, dry/unknown-water lockout, cooling, communication loss, time wraparound, and camera/gesture policies. They do not constitute a physical water-flow, acoustic clarity, or end-to-end hardware test. This four-LED/voice build has been compiled and simulation-tested, and has not been uploaded to the physical board in this session.
 
 ## Regenerate diagrams or speech
 

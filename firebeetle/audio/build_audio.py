@@ -8,9 +8,10 @@ import tempfile
 import wave
 
 ROOT = Path(__file__).resolve().parent
-PHRASES = [('water', 'I need more water.'),
-           ('fire', "The fire is burning. Show me a heart, I'll put it out."),
-           ('love', 'I love you.')]
+PHRASES = [('water', 'I need some water.'),
+           ('fire', 'The fire is burning. Show me a heart, I will put it out.'),
+           ('love', 'I love you too.'),
+           ('spray', 'Putting the fire out.')]
 RATE = 16000
 
 def main():

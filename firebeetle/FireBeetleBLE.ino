@@ -99,7 +99,7 @@ void setup() {
   advertising->start();
   Serial.println("Four LEDs: green14 yellow13 red27 blue4; audio25 pump26 SDA21 SCL22");
   Serial.println("0/1=person absent/present, 4/5=heart held/released, 6=STOP");
-  Serial.println("w/f/l=voice test; serial commands expire unless refreshed");
+  Serial.println("w/f/l/p=voice test (water/fire/love/spray); serial commands expire unless refreshed");
 }
 
 void loop() {
@@ -119,6 +119,7 @@ void loop() {
     if (c == 'w') audio.speak(ControlState::Voice::Water);
     if (c == 'f') audio.speak(ControlState::Voice::Fire);
     if (c == 'l') audio.speak(ControlState::Voice::Love);
+    if (c == 'p') audio.speak(ControlState::Voice::Spray);
   }
   uint8_t cmd;
   while (xQueueReceive(events, &cmd, 0) == pdTRUE) {

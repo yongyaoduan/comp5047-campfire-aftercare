@@ -55,9 +55,11 @@ class WebcamProcessor:
         self.last_timestamp_ms = 0
         self.tracked_pose = None
         vision = mp.tasks.vision
+        # At least four hands, so ANY visible person's heart counts even when
+        # --max-people 1 limits pose tracking for speed on the Pi 3B+.
         self.hands = vision.HandLandmarker.create_from_options(vision.HandLandmarkerOptions(
             base_options=CpuOptions(model_asset_path=str(hand_model)),
-            running_mode=vision.RunningMode.VIDEO, num_hands=max_people * 2,
+            running_mode=vision.RunningMode.VIDEO, num_hands=max(4, max_people * 2),
             min_hand_detection_confidence=.5, min_hand_presence_confidence=.5,
             min_tracking_confidence=.5))
         # IMAGE mode keeps independent left/right crops from corrupting the
