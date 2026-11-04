@@ -2,7 +2,7 @@
 #include <stdint.h>
 
 // Campfire Aftercare control rules (see report §5.2):
-//  - LEDs always mirror the readings: green person, yellow low water, red fire, blue heart.
+//  - LEDs always mirror the readings: green person, blue low water, red fire, yellow heart.
 //  - Water flows only (a) while a heart is held and the bowl is hot, or
 //    (b) automatically when nobody is in view, after 20 s grace + 3 alarm bursts.
 //  - Never spray near a person who is not holding a heart.
@@ -39,9 +39,9 @@ class ControlState {
     const bool hot = in.link && in.temperatureKnown && in.hot;
     const bool waterOK = in.waterKnown && !in.lowWater;
     out.green = person;
-    out.yellow = in.waterKnown && in.lowWater;
+    out.blue = in.waterKnown && in.lowWater;   // blue: tank low
     out.red = in.temperatureKnown && in.hot;
-    out.blue = heart;
+    out.yellow = heart;                        // yellow: heart held
 
     // "I love you too" once per heart gesture, fire or no fire.
     if (heart && !previousHeart_) out.voice = Voice::Love;
@@ -92,7 +92,7 @@ class ControlState {
     out.pump = (heartSpray || autoSpray) && waterOK;
 
     // Water request has priority over other speech while someone is in view.
-    if (out.yellow && person) {
+    if (out.blue && person) {
       if (!waterVoiceSent_ || uint32_t(now - waterVoiceAt_) >= WATER_VOICE_MS) {
         out.voice = Voice::Water;
         waterVoiceAt_ = now;

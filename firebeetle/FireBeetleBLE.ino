@@ -97,7 +97,7 @@ void setup() {
   advertising->addServiceUUID(SERVICE_UUID);
   advertising->setScanResponse(true);
   advertising->start();
-  Serial.println("Four LEDs: green14 yellow13 red27 blue4; audio25 pump26 SDA21 SCL22");
+  Serial.println("Four LEDs: green14 person, yellow13 heart, red27 fire, blue4 tank low; audio25 pump26 SDA21 SCL22");
   Serial.println("0/1=person absent/present, 4/5=heart held/released, 6=STOP");
   Serial.println("w/f/l/p=voice test (water/fire/love/spray); serial commands expire unless refreshed");
 }

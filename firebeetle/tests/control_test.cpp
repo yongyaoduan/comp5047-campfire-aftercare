@@ -63,21 +63,21 @@ int main() {
     C c; auto in = ready(true); c.tick(0, in);
     in.heart = true;
     auto out = c.tick(10, in);
-    assert(out.pump && out.green && out.red && out.blue && out.voice == C::Voice::Love);
+    assert(out.pump && out.green && out.red && out.yellow && out.voice == C::Voice::Love);
     assert(c.tick(20, in).voice == C::Voice::None);            // "I love you too" once
     in.heart = false;
     out = c.tick(30, in);
-    assert(!out.pump && !out.blue);                            // hands down: pump off
+    assert(!out.pump && !out.yellow);                            // hands down: pump off
     in.heart = true;
     assert(c.tick(40, in).voice == C::Voice::Love);            // new gesture, new reply
     in.hot = false;
     out = c.tick(50, in);
-    assert(!out.pump && out.blue);                             // fire out: blue only
+    assert(!out.pump && out.yellow);                             // fire out: yellow only
   }
   { // Low water: no spray anywhere, but the station never goes silent.
     C c; auto in = ready(true); in.lowWater = true; in.heart = true;
     auto out = c.tick(0, in);
-    assert(!out.pump && out.yellow && out.blue && out.red && out.green);
+    assert(!out.pump && out.blue && out.yellow && out.red && out.green);
     assert(out.voice == C::Voice::Water);
     assert(c.tick(4999, in).voice == C::Voice::None);
     assert(c.tick(5000, in).voice == C::Voice::Water);
@@ -89,13 +89,13 @@ int main() {
     out = d.tick(61000, dry);
     assert(out.pump && out.voice == C::Voice::Spray);
   }
-  { // No fire: heart lights blue and says "I love you too", no water, no alarm.
+  { // No fire: heart lights yellow and says "I love you too", no water, no alarm.
     C c; auto in = ready(true); in.hot = false; in.heart = true;
     auto out = c.tick(0, in);
-    assert(out.blue && !out.pump && !out.alarm && out.voice == C::Voice::Love);
+    assert(out.yellow && !out.pump && !out.alarm && out.voice == C::Voice::Love);
     in.link = false;
     out = c.tick(1, in);
-    assert(!out.pump && !out.green && !out.blue);
+    assert(!out.pump && !out.green && !out.yellow);
   }
   { // Disconnect resets the cycle; reconnect cannot resume spraying.
     C c; auto in = ready(); c.tick(0, in); c.tick(50000, in);

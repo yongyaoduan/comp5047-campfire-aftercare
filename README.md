@@ -7,9 +7,9 @@ Raspberry Pi vision and Bluetooth LE, FireBeetle ESP32-E four-LED control, spoke
 | Output | Meaning |
 |---|---|
 | Green / GPIO14 | Person detected |
-| Yellow / GPIO13 | Low tank level |
+| Yellow / GPIO13 | Two-hand heart recognised; remains on while held |
 | Red / GPIO27 | Fire: object temperature reaches 45°C, stays on until it falls below 40°C |
-| Blue / GPIO4 | Two-hand heart recognised; remains on while held |
+| Blue / GPIO4 | Low tank level |
 | Audio / GPIO25 DAC1 | Spoken prompts and alarm |
 | Pump / GPIO26 | MOSFET control signal |
 
@@ -26,7 +26,7 @@ Playback is offline. The WAV files and generated `AudioSamples.h` are included; 
 
 ## Control sequence
 
-1. No fire: no sound, no pump; timers reset. A heart still lights blue and plays "I love you too".
+1. No fire: no sound, no pump; timers reset. A heart still lights yellow and plays "I love you too".
 2. Fire with people in view is normal use: no sound, no pump.
 3. **A heart works at any time.** While any visible person holds a two-hand heart and the bowl is hot, the pump runs; it stops the moment the hands drop (the BLE heart message expires 0.8 s after the last heartbeat; with the Pi 3B+ at ~1 FPS the observed stop is about 2 s after the hands actually drop).
 4. Fire with nobody in view (including nobody ever seen): wait 20 s silently. Coming back within 20 s: nothing happens.
