@@ -26,6 +26,8 @@ static bool audioReady = false;
 static bool person = false, heart = false, armed = false, transportSeen = false;
 static bool lastWaterValid = false, lastTempValid = false;
 static uint32_t lastCommand = 0, lastPerson = 0, lastHeart = 0, lastReport = 0;
+static uint8_t lastWaterRaw[20] = {};
+static bool printRaw = false;
 
 struct SensorSample {
   uint8_t water[20];
@@ -101,7 +103,7 @@ void setup() {
   advertising->start();
   Serial.println("Two LEDs: green16 person, red17 fire; audio25 (amp on 5 V VCC) pump26 SDA21 SCL22");
   Serial.println("0/1=person absent/present, 4/5=heart held/released, 6=STOP");
-  Serial.println("w/f/l/p/e=voice test (water/fire/love/spray/enough); serial commands expire unless refreshed");
+  Serial.println("w/f/l/p/e=voice test (water/fire/love/spray/enough); r=toggle raw water pads; serial commands expire unless refreshed");
 }
 
 void loop() {
@@ -123,6 +125,7 @@ void loop() {
     if (c == 'l') audio.speak(ControlState::Voice::Love);
     if (c == 'p') audio.speak(ControlState::Voice::Spray);
     if (c == 'e') audio.speak(ControlState::Voice::Full);
+    if (c == 'r') printRaw = !printRaw;   // toggle raw water-pad values in the status line
   }
   uint8_t cmd;
   while (xQueueReceive(events, &cmd, 0) == pdTRUE) {
@@ -146,6 +149,7 @@ void loop() {
   SensorSample sample;
   if (xQueueReceive(samples, &sample, 0) == pdTRUE) {
     water.update(sample.water, sample.waterValid, sample.at);
+    memcpy(lastWaterRaw, sample.water, sizeof(lastWaterRaw));
     temperature.update(sample.object, sample.ambient, sample.tempValid, sample.at);
     lastWaterValid = sample.waterValid;
     lastTempValid = sample.tempValid;
@@ -167,7 +171,7 @@ void loop() {
   input.lowWater = water.dry(now);
   input.fullWater = water.full(now);
   // Require two valid samples before allowing pumping (settled wet or dry).
-  input.waterKnown = input.waterKnown && water.settled();
+  input.waterKnown = input.waterKnown && water.settled() && !water.suspect();  // film suspected: unknown
   const auto out = controller.tick(now, input);
   digitalWrite(PUMP, out.pump ? HIGH : LOW);
   digitalWrite(GREEN, out.green ? HIGH : LOW);
@@ -178,10 +182,15 @@ void loop() {
   }
   if (uint32_t(now - lastReport) >= 1000) {
     lastReport = now;
-    Serial.printf("mode=%d link=%d person=%d heart=%d temp_ok=%d object_C=%.2f water_ok=%d level_mm=%u low=%d full=%d pump=%d GR=%d%d\n",
+    Serial.printf("mode=%d link=%d person=%d heart=%d temp_ok=%d object_C=%.2f water_ok=%d level_mm=%u low=%d full=%d suspect=%d pump=%d GR=%d%d\n",
       int(out.mode), link, input.person, input.heart, input.temperatureKnown,
-      temperature.object(), input.waterKnown, water.levelMM(), input.lowWater, input.fullWater,
+      temperature.object(), input.waterKnown, water.levelMM(), input.lowWater, input.fullWater, water.suspect(),
       out.pump, out.green, out.red);
+    if (printRaw) {
+      Serial.print("water_raw (bottom->top):");
+      for (uint8_t v : lastWaterRaw) Serial.printf(" %u", v);
+      Serial.println();
+    }
   }
   delay(5);
 }

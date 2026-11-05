@@ -5,6 +5,7 @@ class WaterLevelState {
  public:
   static constexpr unsigned LOW_SECTIONS = 2;   // fewer than 2 wet sections (10 mm) = tank low
   static constexpr unsigned FULL_SECTIONS = 15;
+  static constexpr uint32_t SUSPECT_MS = 10000;
   void update(const uint8_t *data, bool valid, uint32_t now) {
     if (!valid) { dryCount_ = wetCount_ = 0; return; }
     lastValid_ = now;
@@ -23,6 +24,13 @@ class WaterLevelState {
     // top of the sensor; cleared once the level drops below 13 sections (65 mm).
     if (levelSections_ >= FULL_SECTIONS) { if (fullCount_ < 2) ++fullCount_; if (fullCount_ >= 2) full_ = true; }
     else { fullCount_ = 0; if (levelSections_ < FULL_SECTIONS - 2) full_ = false; }
+    // A water film over the pads makes every pad read 0 (seen on 5 Nov). Real water
+    // cannot fall from 15 mm or more to nothing in one step (the pump drains about
+    // 1.5 mm/s), so a sudden all-dry reading is "suspect" for up to 10 s: it neither
+    // says "low" nor allows spraying. After 10 s it is accepted (e.g. sensor lifted out).
+    if (levelSections_ > 0) { lastLevel_ = levelSections_; lastWetAt_ = now; suspect_ = false; }
+    else suspect_ = lastLevel_ >= 3 && uint32_t(now - lastWetAt_) < SUSPECT_MS;
+    if (suspect_) { dryCount_ = 0; return; }
     if (levelSections_ < LOW_SECTIONS) {
       wetCount_ = 0;
       if (dryCount_ < 2) ++dryCount_;
@@ -37,10 +45,13 @@ class WaterLevelState {
   bool fresh(uint32_t now) const { return valid_ && uint32_t(now-lastValid_) < 1000; }
   bool dry(uint32_t now) const { return fresh(now) && settled_ && dry_; }
   bool full(uint32_t now) const { return fresh(now) && full_; }
+  bool suspect() const { return suspect_; }
   unsigned levelMM() const { return levelSections_ * 5; }
   unsigned wetSections() const { return wetSections_; }
  private:
-  uint32_t lastValid_ = 0;
+  uint32_t lastValid_ = 0, lastWetAt_ = 0;
+  unsigned lastLevel_ = 0;
+  bool suspect_ = false;
   unsigned wetSections_ = 0, levelSections_ = 0;
   uint8_t dryCount_ = 0, wetCount_ = 0, fullCount_ = 0;
   bool valid_ = false, settled_ = false, dry_ = false, full_ = false;

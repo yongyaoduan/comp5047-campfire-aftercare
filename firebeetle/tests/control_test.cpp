@@ -128,6 +128,19 @@ int main() {
     assert(water.levelMM() == 10 && !water.dry(34)); // two sections: OK
     raw[0] = raw[1] = 0;
     assert(!water.fresh(2000));
+    { // Water film: a sudden all-dry reading after a real level is suspect for 10 s.
+      WaterLevelState w; uint8_t r[20] = {};
+      for (int i = 0; i < 6; ++i) r[i] = 249;
+      w.update(r, true, 0); w.update(r, true, 250); assert(!w.dry(250) && w.levelMM() == 30);
+      for (auto &v : r) v = 0;
+      w.update(r, true, 500); w.update(r, true, 750); assert(w.suspect() && !w.dry(750));
+      w.update(r, true, 9000); assert(w.suspect() && !w.dry(9000));
+      w.update(r, true, 10500); w.update(r, true, 10750); assert(!w.suspect() && w.dry(10750));
+      // Gradual draining is believed at once.
+      WaterLevelState g; uint8_t q[20] = {};
+      q[0] = q[1] = 249; g.update(q, true, 0); g.update(q, true, 250);
+      q[1] = 0; g.update(q, true, 500); g.update(q, true, 750); assert(!g.suspect() && g.dry(750));
+    }
     // Full tank: 15 contiguous wet sections twice; clears only below 13 sections.
     for (int i = 0; i < 20; ++i) raw[i] = i < 15 ? 249 : 0;
     water.update(raw, true, 40); assert(!water.full(40));
@@ -141,5 +154,5 @@ int main() {
     temp.update(39.9f, 20, true, 3); assert(!temp.hot(3));
     temp.update(44, 20, true, 4);    assert(!temp.hot(4));    // must reach 45 again
   }
-  puts("Control tests passed (11 scenario groups)");
+  puts("Control tests passed (12 scenario groups)");
 }
