@@ -48,8 +48,13 @@ final class HeartDetector {
     }
 
     static func classify(_ hands: [HeartHand]) -> HeartGesture? {
-        if matchesTwoHand(hands) { return .twoHand }
-        // Final design accepts only the two-hand heart (finger hearts are ignored).
+        // Several people may be in view; any pair of hands forming a two-hand
+        // heart counts (one person, or two people sharing one). Finger hearts are ignored.
+        for i in hands.indices {
+            for j in hands.indices where j > i {
+                if matchesTwoHand([hands[i], hands[j]]) { return .twoHand }
+            }
+        }
         return nil
     }
 
@@ -72,7 +77,7 @@ final class HeartDetector {
         // between the upper index tips and lower thumb tips.
         guard distance(left.indexTip, right.indexTip) <= 0.6 * palm,
               distance(left.thumbTip, right.thumbTip) <= 0.6 * palm,
-              indexMid.y - thumbMid.y >= 0.65 * palm,
+              indexMid.y - thumbMid.y >= 0.45 * palm,
               indexMid.y - thumbMid.y <= 1.8 * palm,
               abs(indexMid.x - thumbMid.x) <= 1.2 * palm,
               abs(indexMid.x - wristMidX) <= 1.5 * palm,
@@ -80,10 +85,10 @@ final class HeartDetector {
 
         for hand in sorted {
             let opening = distance(hand.indexTip, hand.thumbTip)
-            guard opening >= 0.65 * palm, opening <= 1.8 * palm,
-                  hand.indexTip.y - hand.thumbTip.y >= 0.6 * palm,
+            // Opening 0.45-1.8 palms, as in the Pi rule (gesture_core.py).
+            guard opening >= 0.45 * palm, opening <= 1.8 * palm,
+                  hand.indexTip.y - hand.thumbTip.y >= 0.45 * palm,
                   abs(hand.indexTip.x - hand.thumbTip.x) <= 0.8 * palm,
-                  hand.indexTip.y > hand.wrist.y,
                   hand.thumbTip.x >= left.wrist.x - 0.5 * palm,
                   hand.thumbTip.x <= right.wrist.x + 0.5 * palm else { return false }
         }

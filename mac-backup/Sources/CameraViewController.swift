@@ -28,6 +28,9 @@ final class CameraViewController: NSViewController, AVCaptureVideoDataOutputSamp
     private var lastHumanAnnouncementAt: TimeInterval = -100
     private var announcedPresence = false
     private var didStart = false
+    // Written on the vision queue, read by the main-thread timer (a Double is fine for a watchdog).
+    private var lastFrameAt: TimeInterval = -100
+    private var visionStale = false
 
     override func loadView() {
         view = NSView()
@@ -161,6 +164,18 @@ final class CameraViewController: NSViewController, AVCaptureVideoDataOutputSamp
         // Final FireBeetle firmware treats the link as lost after 2 s of silence,
         // so the current presence (present OR absent) is refreshed every second.
         let now = ProcessInfo.processInfo.systemUptime
+        // Frozen camera or vision: like the Pi, send STOP instead of repeating an
+        // old "person present", so the firmware never trusts a stale picture.
+        if now - lastFrameAt > 2 {
+            if !visionStale { appendLog("Camera/vision stalled for 2 s — sending STOP") }
+            visionStale = true
+            if now - lastHumanAnnouncementAt >= 0.3 {
+                lastHumanAnnouncementAt = now
+                bluetooth.sendStopAll()
+            }
+            return
+        }
+        if visionStale { visionStale = false; appendLog("Camera/vision resumed") }
         guard now - lastHumanAnnouncementAt >= 1 else { return }
         lastHumanAnnouncementAt = now
         bluetooth.sendPresence(announcedPresence)
@@ -181,6 +196,15 @@ final class CameraViewController: NSViewController, AVCaptureVideoDataOutputSamp
         }
     }
 
+    /// The Brio 100 (or any external USB camera) is preferred over the built-in
+    /// FaceTime camera, because the webcam is mounted on the station.
+    static func preferredCamera() -> AVCaptureDevice? {
+        let session = AVCaptureDevice.DiscoverySession(
+            deviceTypes: [.external, .builtInWideAngleCamera], mediaType: .video, position: .unspecified)
+        return session.devices.first { $0.deviceType == .external } ?? session.devices.first
+            ?? AVCaptureDevice.default(for: .video)
+    }
+
     private func showCameraDenied() {
         statusLabel.stringValue = "Camera Access Denied"
         detailLabel.stringValue = "Open System Settings → Privacy & Security → Camera, enable Campfire LED Demo, and then reopen the app."
@@ -192,7 +216,7 @@ final class CameraViewController: NSViewController, AVCaptureVideoDataOutputSamp
         captureSession.beginConfiguration()
         captureSession.sessionPreset = .high
 
-        guard let camera = AVCaptureDevice.default(for: .video),
+        guard let camera = Self.preferredCamera(),
               let input = try? AVCaptureDeviceInput(device: camera),
               captureSession.canAddInput(input) else {
             captureSession.commitConfiguration()
@@ -230,29 +254,19 @@ final class CameraViewController: NSViewController, AVCaptureVideoDataOutputSamp
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         let now = ProcessInfo.processInfo.systemUptime
         frameNumber += 1
+        lastFrameAt = now
 
-        var requests: [VNRequest] = []
+        // People every 5th frame, hands every 3rd (and on every people frame, so
+        // a visible hand also counts as presence). Pose runs for the on-screen
+        // wave log only.
         let shouldDetectHumans = frameNumber % 5 == 0
-        if shouldDetectHumans {
-            let humanRequest = VNDetectHumanRectanglesRequest()
-            humanRequest.upperBodyOnly = true
-            requests.append(humanRequest)
-        }
-
-        // Keep the existing body-pose/wave demo and sample hand pose every third frame.
-        let poseRequest = VNDetectHumanBodyPoseRequest()
-        requests.append(poseRequest)
-        let shouldDetectHands = frameNumber % 3 == 0
-        let handRequest = VNDetectHumanHandPoseRequest()
-        if shouldDetectHands {
-            handRequest.maximumHandCount = 2
-            requests.append(handRequest)
-        }
-
-        guard !requests.isEmpty else { return }
+        let shouldDetectHands = frameNumber % 3 == 0 || shouldDetectHumans
         let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .up, options: [:])
+        let poseRequest = VNDetectHumanBodyPoseRequest()
+        let result: VisionPipeline.Frame
         do {
-            try handler.perform(requests)
+            result = try VisionPipeline.analyze(handler, people: shouldDetectHumans, hands: shouldDetectHands)
+            try handler.perform([poseRequest])
         } catch {
             DispatchQueue.main.async { [weak self] in
                 self?.appendLog("Vision processing error: \(error.localizedDescription)")
@@ -260,12 +274,8 @@ final class CameraViewController: NSViewController, AVCaptureVideoDataOutputSamp
             return
         }
 
-        if shouldDetectHumans,
-           let humanRequest = requests.first as? VNDetectHumanRectanglesRequest {
-            let boxes = (humanRequest.results ?? [])
-                .filter { $0.confidence >= 0.55 }
-                .map(\.boundingBox)
-            updatePresence(boxes: boxes, now: now)
+        if shouldDetectHumans {
+            updatePresence(boxes: result.personBoxes, handSeen: result.handSeen, now: now)
         }
 
         var wrists: [CGPoint] = []
@@ -275,24 +285,8 @@ final class CameraViewController: NSViewController, AVCaptureVideoDataOutputSamp
 
         var heartTips: [CGPoint] = []
         if shouldDetectHands {
-            var hands: [HeartHand] = []
-            for observation in handRequest.results ?? [] {
-                guard let points = try? observation.recognizedPoints(.all),
-                      let wrist = validPoint(points[.wrist], minimumConfidence: 0.35),
-                      let middleMCP = validPoint(points[.middleMCP], minimumConfidence: 0.35),
-                      let indexTip = validPoint(points[.indexTip], minimumConfidence: 0.35),
-                      let thumbTip = validPoint(points[.thumbTip], minimumConfidence: 0.35) else { continue }
-                hands.append(HeartHand(
-                    wrist: wrist,
-                    middleMCP: middleMCP,
-                    indexTip: indexTip,
-                    thumbTip: thumbTip,
-                    indexPIP: validPoint(points[.indexPIP], minimumConfidence: 0.35),
-                    thumbIP: validPoint(points[.thumbIP], minimumConfidence: 0.35),
-                    middleTip: validPoint(points[.middleTip], minimumConfidence: 0.35)
-                ))
-                heartTips.append(contentsOf: [indexTip, thumbTip])
-            }
+            let hands = result.hands
+            for hand in hands { heartTips.append(contentsOf: [hand.indexTip, hand.thumbTip]) }
             let heartUpdate = heartDetector.observe(hands, at: now)
             if let gesture = heartUpdate.started {
                 lastHeartStatusSentAt = now
@@ -318,9 +312,9 @@ final class CameraViewController: NSViewController, AVCaptureVideoDataOutputSamp
         }
     }
 
-    private func updatePresence(boxes: [CGRect], now: TimeInterval) {
+    private func updatePresence(boxes: [CGRect], handSeen: Bool, now: TimeInterval) {
         lastHumanBoxes = boxes
-        if boxes.isEmpty {
+        if boxes.isEmpty && !handSeen {
             humanPositiveFrames = 0
             if presence, now - lastHumanSeenAt > 1.5 {
                 presence = false
