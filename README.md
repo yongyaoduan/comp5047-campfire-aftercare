@@ -134,3 +134,13 @@ The generator writes beside itself regardless of the current working directory. 
 [FireBeetle](https://wiki.dfrobot.com/dfr0654/) · [MOSFET](https://wiki.dfrobot.com/dfr0457) · [Makerverse amplifier](https://core-electronics.com.au/makerverse-pam8302-2-5w-mono-amplifier.html) · [Water sensor](https://wiki.seeedstudio.com/Grove-Water-Level-Sensor/)
 
 This is a supervised classroom prototype, not a validated fire-extinguishing device.
+
+## Water level sensor: power up dry
+
+The Grove water-level sensor calibrates itself when it is powered. Powered up while
+its pads are in water, it reports every pad as 0 (I²C still works), so the station
+believes the tank is empty and keeps asking for water. Always power the station with
+the sensor out of the water (or before filling), then fill. If it restarted in water:
+unplug the 12 V pump, lift the sensor out, wipe it, power-cycle, put it back.
+The firmware treats a sudden drop from a real level to all-zero as a sensor fault
+(no water request, no spray) until real readings return; serial `r` prints the pads.

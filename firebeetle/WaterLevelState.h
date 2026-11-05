@@ -5,7 +5,6 @@ class WaterLevelState {
  public:
   static constexpr unsigned LOW_SECTIONS = 2;   // fewer than 2 wet sections (10 mm) = tank low
   static constexpr unsigned FULL_SECTIONS = 15;
-  static constexpr uint32_t SUSPECT_MS = 10000;
   void update(const uint8_t *data, bool valid, uint32_t now) {
     if (!valid) { dryCount_ = wetCount_ = 0; return; }
     lastValid_ = now;
@@ -24,12 +23,15 @@ class WaterLevelState {
     // top of the sensor; cleared once the level drops below 13 sections (65 mm).
     if (levelSections_ >= FULL_SECTIONS) { if (fullCount_ < 2) ++fullCount_; if (fullCount_ >= 2) full_ = true; }
     else { fullCount_ = 0; if (levelSections_ < FULL_SECTIONS - 2) full_ = false; }
-    // A water film over the pads makes every pad read 0 (seen on 5 Nov). Real water
-    // cannot fall from 15 mm or more to nothing in one step (the pump drains about
-    // 1.5 mm/s), so a sudden all-dry reading is "suspect" for up to 10 s: it neither
-    // says "low" nor allows spraying. After 10 s it is accepted (e.g. sensor lifted out).
-    if (levelSections_ > 0) { lastLevel_ = levelSections_; lastWetAt_ = now; suspect_ = false; }
-    else suspect_ = lastLevel_ >= 3 && uint32_t(now - lastWetAt_) < SUSPECT_MS;
+    // The Grove sensor calibrates itself at power-up; powered up in water it then
+    // reports every pad as 0 although I2C works (found on 5 Nov; also reported on
+    // Seeed's forum). Real water cannot fall from 15 mm or more to nothing in one
+    // reading (the pump drains about 1.5 mm/s), so a sudden all-dry reading marks
+    // the sensor as faulty: no water request and no spray until real readings return.
+    // An all-zero reading at start-up cannot be told apart from an empty tank, so the
+    // station must be powered with the sensor dry (user manual).
+    if (levelSections_ > 0) { lastLevel_ = levelSections_; suspect_ = false; }
+    else if (lastLevel_ >= 3) suspect_ = true;
     if (suspect_) { dryCount_ = 0; return; }
     if (levelSections_ < LOW_SECTIONS) {
       wetCount_ = 0;
@@ -49,7 +51,7 @@ class WaterLevelState {
   unsigned levelMM() const { return levelSections_ * 5; }
   unsigned wetSections() const { return wetSections_; }
  private:
-  uint32_t lastValid_ = 0, lastWetAt_ = 0;
+  uint32_t lastValid_ = 0;
   unsigned lastLevel_ = 0;
   bool suspect_ = false;
   unsigned wetSections_ = 0, levelSections_ = 0;
