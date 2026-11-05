@@ -19,6 +19,9 @@ class AudioPlayer {
     config.dma_buf_count = 4;
     config.dma_buf_len = 128;
     config.tx_desc_auto_clear = false;
+    // Without APLL the built-in-DAC clock divider runs ~5.5x fast (measured 88.6k
+    // samples/s for a 16 kHz setting); APLL gives the true 16 kHz.
+    config.use_apll = true;
     if (i2s_driver_install(I2S_NUM_0, &config, 0, nullptr) != ESP_OK) return false;
     if (i2s_set_dac_mode(I2S_DAC_CHANNEL_RIGHT_EN) != ESP_OK) return false;
     return xTaskCreate(task, "audio-dma", 4096, this, 1, nullptr) == pdPASS;
@@ -65,9 +68,10 @@ class AudioPlayer {
       if (alarmOn) { clip = nullptr; count = offset = 0; }
       for (auto &sample : buffer) {
         uint8_t value = 128;
-        if (alarmOn)
-          value = uint8_t(128 + 45 * sinf(2 * PI * 880 * (toneSample++ % AUDIO_RATE) / AUDIO_RATE));
-        else if (clip && offset < count) value = clip[offset++];
+        if (alarmOn) {  // clipped sine: near-square, full DAC swing = loudest alarm
+          const float s = 1.8f * sinf(2 * PI * 880 * (toneSample++ % AUDIO_RATE) / AUDIO_RATE);
+          value = uint8_t(128 + 127 * (s > 1 ? 1 : (s < -1 ? -1 : s)));
+        } else if (clip && offset < count) value = clip[offset++];
         sample = uint16_t(value) << 8;
       }
       size_t written = 0;
