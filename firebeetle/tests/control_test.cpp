@@ -13,50 +13,50 @@ C::Input ready(bool person = false) {
 }
 
 int main() {
-  { // Nobody ever seen: 20 s silence, three 5 s bursts, then automatic spray.
+  { // Nobody ever seen: 5 s silence, three 1 s bursts, then automatic spray.
     C c; auto in = ready();
     assert(!c.tick(0, in).pump);
-    assert(!c.tick(19999, in).alarm);
-    assert(c.tick(20000, in).alarm);
-    assert(!c.tick(25000, in).alarm);
-    assert(c.tick(30000, in).alarm);
-    assert(!c.tick(35000, in).alarm);
-    assert(c.tick(40000, in).alarm);
-    assert(!c.tick(45000, in).alarm);
-    assert(!c.tick(49999, in).pump);
-    auto out = c.tick(50000, in);
+    assert(!c.tick(4999, in).alarm);
+    assert(c.tick(5000, in).alarm);
+    assert(!c.tick(6000, in).alarm);
+    assert(c.tick(7000, in).alarm);
+    assert(!c.tick(8000, in).alarm);
+    assert(c.tick(9000, in).alarm);
+    assert(!c.tick(10000, in).alarm);
+    assert(!c.tick(10999, in).pump);
+    auto out = c.tick(11000, in);
     assert(out.pump && out.red && out.voice == C::Voice::Spray); // LEDs stay on; announce once
-    assert(c.tick(50001, in).voice == C::Voice::None);
+    assert(c.tick(11001, in).voice == C::Voice::None);
     in.hot = false;                                            // bowl cooled
-    out = c.tick(50002, in);
+    out = c.tick(11002, in);
     assert(!out.pump && out.mode == C::Mode::Monitor);
     in.hot = true;                                             // re-ignites: cycle restarts
-    assert(c.tick(50003, in).mode == C::Mode::Grace);
-    assert(!c.tick(70002, in).pump && c.tick(70003, in).alarm);
+    assert(c.tick(11003, in).mode == C::Mode::Grace);
+    assert(!c.tick(16002, in).pump && c.tick(16003, in).alarm);
   }
-  { // Back within the 20 s grace: nothing happens (no prompt, no alarm).
+  { // Back within the 5 s grace: nothing happens (no prompt, no alarm).
     C c; auto in = ready(); c.tick(0, in);
     in.person = true;
-    auto out = c.tick(10000, in);
+    auto out = c.tick(3000, in);
     assert(!out.pump && !out.alarm && out.voice == C::Voice::None && out.green);
   }
   { // Back during the alarm: alarm stops, prompt once, then normal use.
     C c; auto in = ready(); c.tick(0, in);
-    assert(c.tick(20000, in).alarm);
+    assert(c.tick(5000, in).alarm);
     in.person = true;
-    auto out = c.tick(21000, in);
+    auto out = c.tick(5500, in);
     assert(!out.pump && !out.alarm && out.voice == C::Voice::Fire);
-    out = c.tick(22000, in);
+    out = c.tick(6000, in);
     assert(!out.pump && out.voice == C::Voice::None && out.mode == C::Mode::Monitor);
   }
   { // Person walks in during an automatic spray without a heart: pump stops at once.
     C c; auto in = ready(); c.tick(0, in);
-    assert(c.tick(50000, in).pump);
+    assert(c.tick(11000, in).pump);
     in.person = true;
-    auto out = c.tick(50100, in);
+    auto out = c.tick(11100, in);
     assert(!out.pump && out.voice == C::Voice::Fire);
     in.heart = true;                                           // ...unless they hold a heart
-    out = c.tick(50200, in);
+    out = c.tick(11200, in);
     assert(out.pump && out.voice == C::Voice::Love);
   }
   { // Heart works at any time while hot, but only while it is held.
@@ -83,10 +83,10 @@ int main() {
     assert(c.tick(5000, in).voice == C::Voice::Water);
     // Nobody here and dry: after the bursts the alarm keeps repeating.
     C d; auto dry = ready(); dry.lowWater = true; d.tick(0, dry);
-    assert(!d.tick(50000, dry).pump && d.tick(50000, dry).alarm);
-    assert(!d.tick(55000, dry).alarm && d.tick(60000, dry).alarm && !d.tick(60000, dry).pump);
+    assert(!d.tick(11000, dry).pump && d.tick(11000, dry).alarm);
+    assert(!d.tick(12000, dry).alarm && d.tick(13000, dry).alarm && !d.tick(13000, dry).pump);
     dry.lowWater = false;                                      // refilled while still alone
-    out = d.tick(61000, dry);
+    out = d.tick(13500, dry);
     assert(out.pump && out.voice == C::Voice::Spray);
   }
   { // No fire: heart says "I love you too", no water, no alarm.
@@ -98,15 +98,15 @@ int main() {
     assert(!out.pump && !out.green);
   }
   { // Disconnect resets the cycle; reconnect cannot resume spraying.
-    C c; auto in = ready(); c.tick(0, in); c.tick(50000, in);
-    in.link = false; assert(!c.tick(50001, in).pump);
-    in.link = true; assert(!c.tick(50002, in).pump);
-    assert(!c.tick(70001, in).alarm);
+    C c; auto in = ready(); c.tick(0, in); c.tick(11000, in);
+    in.link = false; assert(!c.tick(11001, in).pump);
+    in.link = true; assert(!c.tick(11002, in).pump);
+    assert(!c.tick(16001, in).alarm);
   }
   { // Clock wrap: unsigned duration arithmetic remains valid.
     C c; auto in = ready();
     c.tick(0xfffff000u, in);
-    assert(c.tick(uint32_t(0xfffff000u + 20000u), in).alarm);
+    assert(c.tick(uint32_t(0xfffff000u + 5000u), in).alarm);
   }
   { // Sensors: stale water is not "empty"; temperature has 45/40 °C hysteresis.
     WaterLevelState water; uint8_t raw[20] = {};

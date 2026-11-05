@@ -27,9 +27,9 @@ Playback is offline. The WAV files and generated `AudioSamples.h` are included; 
 1. No fire: no sound, no pump; timers reset. A heart still plays "I love you too".
 2. Fire with people in view is normal use: no sound, no pump.
 3. **A heart works at any time.** While any visible person holds a two-hand heart and the bowl is hot, the pump runs; it stops the moment the hands drop (the BLE heart message expires 0.8 s after the last heartbeat; with the Pi 3B+ at ~1 FPS the observed stop is about 2 s after the hands actually drop).
-4. Fire with nobody in view (including nobody ever seen): wait 20 s silently. Coming back within 20 s: nothing happens.
-5. Then alarm 5 s on / 5 s off, at most three times. Coming back during the alarm stops it and plays the fire prompt once; after that it is normal use.
-6. Nobody back after the third pause (50 s from absence): "Putting the fire out", then spray until the bowl falls below 40°C. A person walking in without a heart stops the pump immediately.
+4. Fire with nobody in view (including nobody ever seen): wait 5 s silently (shortened for the demo; a field version would wait longer). Coming back within 5 s: nothing happens.
+5. Then alarm 1 s on / 1 s off, at most three times. Coming back during the alarm stops it and plays the fire prompt once; after that it is normal use.
+6. Nobody back after the third pause (11 s from absence): "Putting the fire out", then spray until the bowl falls below 40°C. A person walking in without a heart stops the pump immediately.
 7. Low water blocks every spray but never silences the station: with someone in view it asks for water; with nobody in view the alarm keeps repeating.
 8. Re-ignition after an automatic spray restarts the cycle at step 4. Invalid/stale sensor readings, BLE disconnect, stale command stream, or STOP block spraying and reset the sequence.
 

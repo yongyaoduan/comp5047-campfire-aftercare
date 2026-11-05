@@ -6,7 +6,7 @@
 //  - Tank low is spoken ("I need some more water", every 5 s while someone is in view);
 //    a held heart is answered by "I love you too" and, if the bowl is hot, by water.
 //  - Water flows only (a) while a heart is held and the bowl is hot, or
-//    (b) automatically when nobody is in view, after 20 s grace + 3 alarm bursts.
+//    (b) automatically when nobody is in view, after 5 s grace + 3 alarm bursts (1 s on, 1 s off).
 //  - Never spray near a person who is not holding a heart.
 //  - Coming back during the grace period: nothing happens.
 //    Coming back during the alarm / auto spray: alarm stops, fire prompt plays once.
@@ -26,7 +26,7 @@ class ControlState {
     Voice voice = Voice::None;
     Mode mode = Mode::Monitor;
   };
-  static constexpr uint32_t GRACE_MS = 20000, BURST_MS = 5000, WATER_VOICE_MS = 5000;
+  static constexpr uint32_t GRACE_MS = 5000, BURST_MS = 1000, WATER_VOICE_MS = 5000;
 
   void reset() {
     mode_ = Mode::Monitor;
@@ -65,7 +65,7 @@ class ControlState {
         phaseStarted_ += GRACE_MS;
       }
       if (mode_ == Mode::Alarm) {
-        // Bursts at 0-5, 10-15, 20-25 s; automatic spray after the third pause (30 s).
+        // Bursts at 0-1, 2-3, 4-5 s; automatic spray after the third pause (6 s).
         const uint32_t elapsed = now - phaseStarted_;
         if (elapsed >= 6 * BURST_MS) {
           mode_ = Mode::AutoSpray;

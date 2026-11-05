@@ -13,7 +13,7 @@ safety decision.
 * Two-hand heart only. Waves are still detected for the on-screen log but are
   **not** sent (the final firmware ignores command `2`).
 * "Nobody" is declared 1.5 s after the last person detection (the Pi takes
-  longer because it runs at ~1 FPS). The firmware's 20 s grace is unchanged.
+  longer because it runs at ~1 FPS). The firmware's 5 s grace is unchanged.
 
 ## Run
 
