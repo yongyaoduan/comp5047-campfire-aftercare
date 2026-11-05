@@ -10,7 +10,9 @@
 #include "SensorRead.h"
 #include "AudioPlayer.h"
 
-constexpr uint8_t GREEN = 14, YELLOW = 13, RED = 27, BLUE = 4, PUMP = 26;
+// Two LEDs on the short header row (easy to solder): green person, red fire.
+// Tank low is spoken ("I need some more water"); a held heart is answered by voice and water.
+constexpr uint8_t GREEN = 16, RED = 17, PUMP = 26;
 static const char *SERVICE_UUID = "A6E40001-B5A3-F393-E0A9-E50E24DCCA9E";
 static const char *COMMAND_UUID = "A6E40002-B5A3-F393-E0A9-E50E24DCCA9E";
 static QueueHandle_t events, samples;
@@ -74,7 +76,7 @@ class CommandCallbacks : public BLECharacteristicCallbacks {
 void setup() {
   digitalWrite(PUMP, LOW);
   pinMode(PUMP, OUTPUT);
-  for (uint8_t pin : {GREEN, YELLOW, RED, BLUE}) {
+  for (uint8_t pin : {GREEN, RED}) {
     digitalWrite(pin, LOW);
     pinMode(pin, OUTPUT);
   }
@@ -97,7 +99,7 @@ void setup() {
   advertising->addServiceUUID(SERVICE_UUID);
   advertising->setScanResponse(true);
   advertising->start();
-  Serial.println("Four LEDs: green14 person, yellow13 heart, red27 fire, blue4 tank low; audio25 pump26 SDA21 SCL22");
+  Serial.println("Two LEDs: green16 person, red17 fire; audio25 (amp on 5 V VCC) pump26 SDA21 SCL22");
   Serial.println("0/1=person absent/present, 4/5=heart held/released, 6=STOP");
   Serial.println("w/f/l/p=voice test (water/fire/love/spray); serial commands expire unless refreshed");
 }
@@ -167,19 +169,17 @@ void loop() {
   const auto out = controller.tick(now, input);
   digitalWrite(PUMP, out.pump ? HIGH : LOW);
   digitalWrite(GREEN, out.green ? HIGH : LOW);
-  digitalWrite(YELLOW, out.yellow ? HIGH : LOW);
   digitalWrite(RED, out.red ? HIGH : LOW);
-  digitalWrite(BLUE, out.blue ? HIGH : LOW);
   if (audioReady) {
     audio.alarm(out.alarm);
     audio.speak(out.voice);
   }
   if (uint32_t(now - lastReport) >= 1000) {
     lastReport = now;
-    Serial.printf("mode=%d link=%d person=%d heart=%d temp_ok=%d object_C=%.2f water_ok=%d level_mm=%u low=%d pump=%d GYRB=%d%d%d%d\n",
+    Serial.printf("mode=%d link=%d person=%d heart=%d temp_ok=%d object_C=%.2f water_ok=%d level_mm=%u low=%d pump=%d GR=%d%d\n",
       int(out.mode), link, input.person, input.heart, input.temperatureKnown,
       temperature.object(), input.waterKnown, water.levelMM(), input.lowWater,
-      out.pump, out.green, out.yellow, out.red, out.blue);
+      out.pump, out.green, out.red);
   }
   delay(5);
 }

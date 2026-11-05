@@ -95,7 +95,7 @@ final class CameraViewController: NSViewController, AVCaptureVideoDataOutputSamp
 
         let explanation = NSTextField(wrappingLabelWithString:
             (dryRun ? "DRY RUN: hardware outputs are disabled. " : "") +
-            "Person visible: green ON. Wave: yellow flashes twice and pump runs for three seconds. Either heart: yellow stays ON and pump runs while the heart is recognized. Release takes about 0.3 seconds; the Mac continuously confirms a held heart."
+            "Person visible: green ON. Two-hand heart: \"I love you too\", and the pump runs while the heart is held and the bowl is hot. Release takes about 0.3 seconds; the Mac continuously confirms a held heart."
         )
         explanation.textColor = .secondaryLabelColor
 
@@ -397,7 +397,7 @@ final class CameraViewController: NSViewController, AVCaptureVideoDataOutputSamp
         heartCount += 1
         gestureLabel.stringValue = "\(gesture.rawValue.capitalized) Held (Event \(heartCount))"
         if bluetooth.sendHeartOn() {
-            appendLog("\(gesture.rawValue) recognized — \(dryRun ? "DRY RUN, outputs disabled" : "heart held sent to FireBeetle (blue LED, voice, pump only if the bowl is hot)").")
+            appendLog("\(gesture.rawValue) recognized — \(dryRun ? "DRY RUN, outputs disabled" : "heart held sent to FireBeetle (voice, pump only if the bowl is hot)").")
         } else {
             appendLog("\(gesture.rawValue) recognized, but FireBeetle is not connected; command not sent.")
         }

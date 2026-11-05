@@ -1,6 +1,8 @@
 """Campfire Aftercare wiring schematic, drawn with Schemdraw 0.23.
 
-Nets with the same label (3V3, GND, SDA, SCL, GPIO26, GPIO25) are connected.
+Nets with the same label (3V3, 5V, GND, SDA, SCL, PUMP_SIG, AUDIO) are connected.
+Two LEDs (GPIO16 green, GPIO17 red) and the amplifier supply (VCC 5 V, GND) use the
+short header row, which has free pins that are easy to solder.
 Run:  python schematic.py   -> img/schematic.svg, img/schematic.png
 """
 import schemdraw
@@ -33,10 +35,9 @@ with schemdraw.Drawing(file=None, show=False) as d:
               elm.IcPin(name='GND', side='left', anchorname='GNDL'),
               elm.IcPin(name='3V3', side='left', anchorname='V33'),
               elm.IcPin(name='GND', side='right', anchorname='GNDR'),
-              elm.IcPin(name='GPIO4', side='right', anchorname='P4'),
-              elm.IcPin(name='GPIO27', side='right', anchorname='P27'),
-              elm.IcPin(name='GPIO13', side='right', anchorname='P13'),
-              elm.IcPin(name='GPIO14', side='right', anchorname='P14'),
+              elm.IcPin(name='GPIO17 / D10', side='right', anchorname='P17'),
+              elm.IcPin(name='GPIO16 / D11', side='right', anchorname='P16'),
+              elm.IcPin(name='VCC (5 V USB)', side='right', anchorname='VCC'),
               elm.IcPin(name='GPIO25 (DAC1)', side='bottom', anchorname='P25')],
         pinspacing=1.1, edgepadW=4.2, edgepadH=1.4, leadlen=0.5,
     ).at((0, 0))
@@ -53,11 +54,10 @@ with schemdraw.Drawing(file=None, show=False) as d:
     d += elm.Line().at(mcu.P25).down(0.6)
     d += elm.Dot(open=True).label('AUDIO', loc='bottom', fontsize=13, color='#1f4e9c')
 
-    # ---------------- Four LEDs ----------------
-    rows = [('P14', 'green', 'Green: person in view'),
-            ('P13', 'gold', 'Yellow: heart recognised'),
-            ('P27', 'red', 'Red: fire (on 45 °C, off < 40 °C)'),
-            ('P4', 'blue', 'Blue: tank low')]
+    # ---------------- Two LEDs (short header row) ----------------
+    net(d, mcu.VCC, 'right', '5V', 0.8)
+    rows = [('P16', 'green', 'Green: person in view'),
+            ('P17', 'red', 'Red: fire (on 45 °C, off < 40 °C)')]
     ends = []
     for anchor, colour, text in rows:
         d += elm.Line().at(getattr(mcu, anchor)).right(0.5)
@@ -158,7 +158,7 @@ with schemdraw.Drawing(file=None, show=False) as d:
     d += elm.Line().at(amp.INn).left(0.8)
     d += elm.Line().down(0.6)
     d += elm.Ground()
-    net(d, amp.V, 'up', '3V3', 0.5)
+    net(d, amp.V, 'up', '5V', 0.5)
     d += elm.Line().at(amp.G).up(0.5)
     d += elm.Ground().flip()
     d += elm.Line().at(amp.Op).right(0.8)
@@ -169,7 +169,8 @@ with schemdraw.Drawing(file=None, show=False) as d:
     d += elm.Line().tox(sp.in2[0])
 
     d += elm.Label().at((mcu.center[0] + 2, by - 5.8)).label(
-        'Nets with the same blue label are connected.  12 V reaches only the MOSFET output stage and the pump.\n'
+        'Nets with the same blue label are connected.  LEDs and amplifier supply use the short header row (GPIO16, GPIO17, VCC, GND).\n'
+        '12 V reaches only the MOSFET output stage and the pump.  '
         'Raspberry Pi 3B+ and Brio 100 webcam (own 5 V supply) talk to the FireBeetle over Bluetooth LE only.',
         fontsize=12)
 

@@ -1,19 +1,17 @@
 # Campfire Aftercare — COMP5047 Group 23
 
-Raspberry Pi vision and Bluetooth LE, FireBeetle ESP32-E four-LED control, spoken prompts, water/heat sensors, and a 12V water pump.
+Raspberry Pi vision and Bluetooth LE, FireBeetle ESP32-E two-LED control, spoken prompts, water/heat sensors, and a 12V water pump.
 
 ## Lights and speech
 
 | Output | Meaning |
 |---|---|
-| Green / GPIO14 | Person detected |
-| Yellow / GPIO13 | Two-hand heart recognised; remains on while held |
-| Red / GPIO27 | Fire: object temperature reaches 45°C, stays on until it falls below 40°C |
-| Blue / GPIO4 | Low tank level |
+| Green / GPIO16 | Person detected |
+| Red / GPIO17 | Fire: object temperature reaches 45°C, stays on until it falls below 40°C |
 | Audio / GPIO25 DAC1 | Spoken prompts and alarm |
 | Pump / GPIO26 | MOSFET control signal |
 
-**All LEDs continue to indicate their states while spraying.** Green, yellow, red and blue are independent; spraying does not blank them.
+**Both LEDs continue to indicate their states while spraying.** There is no LED for the heart or for a low tank: a held heart is answered by "I love you too" and, when the bowl is hot, by water; a low tank is announced by the repeating water prompt.
 
 The committed English WAV files and flash-resident samples are generated with macOS Samantha at 155 words/minute:
 
@@ -26,7 +24,7 @@ Playback is offline. The WAV files and generated `AudioSamples.h` are included; 
 
 ## Control sequence
 
-1. No fire: no sound, no pump; timers reset. A heart still lights yellow and plays "I love you too".
+1. No fire: no sound, no pump; timers reset. A heart still plays "I love you too".
 2. Fire with people in view is normal use: no sound, no pump.
 3. **A heart works at any time.** While any visible person holds a two-hand heart and the bowl is hot, the pump runs; it stops the moment the hands drop (the BLE heart message expires 0.8 s after the last heartbeat; with the Pi 3B+ at ~1 FPS the observed stop is about 2 s after the hands actually drop).
 4. Fire with nobody in view (including nobody ever seen): wait 20 s silently. Coming back within 20 s: nothing happens.
@@ -49,14 +47,14 @@ The report's existing drawing and visual layout are included unchanged:
 
 | Connection | Wiring |
 |---|---|
-| Each LED | GPIO → its own 330Ω resistor → anode; cathode → GND |
+| Each LED | GPIO16 (green) / GPIO17 (red), on the short header row → its own 330Ω resistor → anode; cathode → GND on the same row |
 | Water sensor | White SDA→21, yellow SCL→22, red→3V3, black→GND |
 | IR thermometer | SDA→21, SCL→22, VCC→3V3, GND→GND; use module labels |
 | DFR0457 control plug | Signal→26, VCC→3V3, GND→GND |
 | DFR0457 screw terminals | Supply +12V→VIN; supply negative and pump negative→GND; pump positive→VOUT |
 | Flyback diode | Across pump; striped cathode→pump positive, anode→pump negative |
 | Makerverse CE08263 audio | GPIO25→10kΩ→IN; IN→1kΩ→GND; both amplifier GND pins→board GND; SD left open |
-| Amplifier supply | 3V3 as drawn, or board VCC when powered from 5V USB; begin at low volume |
+| Amplifier supply | Board VCC (5V from USB) and GND on the short header row; begin at low volume |
 | Speaker | Both leads to amplifier output +/−; neither lead to GND |
 
 The drawing uses functional input/output labels rather than literal terminal counts. The actual DFR0457 has three power screw terminals, **VIN/GND/VOUT**. Makerverse CE08263 has **IN, signal GND, SD, Vcc, power GND**; its signal GND corresponds to the drawing's grounded input reference. Match the labels on the actual modules.
@@ -66,7 +64,7 @@ The drawing uses functional input/output labels rather than literal terminal cou
 ## Repository layout
 
 - `pi/`: USB camera processing, person/heart recognition, latest-frame capture and BLE client.
-- `firebeetle/`: four-LED/voice firmware, state machine, sensor readers, audio clips and C++ tests.
+- `firebeetle/`: two-LED/voice firmware, state machine, sensor readers, audio clips and C++ tests.
 - `mac-backup/`: demo-day fallback — Swift/Apple Vision app for a MacBook that replaces the Pi's vision step and sends the same BLE commands (see `mac-backup/README.md`).
 - `hardware-tests/`: standalone diagnostic programs, including 100 ms raw water logging.
 - `cad/`: enclosure source scripts and schedules.
@@ -117,7 +115,7 @@ c++ -std=c++11 firebeetle/tests/control_test.cpp -o /tmp/campfire-control-test
 pio run -d firebeetle
 ```
 
-Tests cover LED states during pumping, heart-held spraying, absent-person timing, return cancellation, dry/unknown-water lockout, cooling, communication loss, time wraparound, and camera/gesture policies. They do not constitute a physical water-flow, acoustic clarity, or end-to-end hardware test. This four-LED/voice build has been compiled and simulation-tested, and has not been uploaded to the physical board in this session.
+Tests cover LED states during pumping, heart-held spraying, absent-person timing, return cancellation, dry/unknown-water lockout, cooling, communication loss, time wraparound, and camera/gesture policies. They do not constitute a physical water-flow, acoustic clarity, or end-to-end hardware test. This two-LED/voice build has been compiled and simulation-tested, and has not been uploaded to the physical board in this session.
 
 ## Regenerate diagrams or speech
 

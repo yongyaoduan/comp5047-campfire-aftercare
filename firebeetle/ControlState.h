@@ -2,7 +2,9 @@
 #include <stdint.h>
 
 // Campfire Aftercare control rules (see report §5.2):
-//  - LEDs always mirror the readings: green person, blue low water, red fire, yellow heart.
+//  - Two LEDs mirror the readings: green person in view, red fire.
+//  - Tank low is spoken ("I need some more water", every 5 s while someone is in view);
+//    a held heart is answered by "I love you too" and, if the bowl is hot, by water.
 //  - Water flows only (a) while a heart is held and the bowl is hot, or
 //    (b) automatically when nobody is in view, after 20 s grace + 3 alarm bursts.
 //  - Never spray near a person who is not holding a heart.
@@ -19,7 +21,7 @@ class ControlState {
     bool waterKnown = false, lowWater = false;
   };
   struct Output {
-    bool green = false, yellow = false, red = false, blue = false;
+    bool green = false, red = false;
     bool pump = false, alarm = false;
     Voice voice = Voice::None;
     Mode mode = Mode::Monitor;
@@ -39,9 +41,8 @@ class ControlState {
     const bool hot = in.link && in.temperatureKnown && in.hot;
     const bool waterOK = in.waterKnown && !in.lowWater;
     out.green = person;
-    out.blue = in.waterKnown && in.lowWater;   // blue: tank low
     out.red = in.temperatureKnown && in.hot;
-    out.yellow = heart;                        // yellow: heart held
+    const bool tankLow = in.waterKnown && in.lowWater;
 
     // "I love you too" once per heart gesture, fire or no fire.
     if (heart && !previousHeart_) out.voice = Voice::Love;
@@ -92,7 +93,7 @@ class ControlState {
     out.pump = (heartSpray || autoSpray) && waterOK;
 
     // Water request has priority over other speech while someone is in view.
-    if (out.blue && person) {
+    if (tankLow && person) {
       if (!waterVoiceSent_ || uint32_t(now - waterVoiceAt_) >= WATER_VOICE_MS) {
         out.voice = Voice::Water;
         waterVoiceAt_ = now;
