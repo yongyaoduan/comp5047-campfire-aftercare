@@ -122,6 +122,11 @@ int main() {
     water.update(raw, true, 20); assert(water.settled() && water.dry(20));
     raw[3] = 249; water.update(raw, true, 30);
     assert(water.levelMM() == 0); // Isolated upper film ignored.
+    raw[0] = 249; water.update(raw, true, 31); water.update(raw, true, 32);
+    assert(water.levelMM() == 5 && water.dry(32));   // one section: still low
+    raw[1] = 249; water.update(raw, true, 33); water.update(raw, true, 34);
+    assert(water.levelMM() == 10 && !water.dry(34)); // two sections: OK
+    raw[0] = raw[1] = 0;
     assert(!water.fresh(2000));
     // Full tank: 15 contiguous wet sections twice; clears only below 13 sections.
     for (int i = 0; i < 20; ++i) raw[i] = i < 15 ? 249 : 0;

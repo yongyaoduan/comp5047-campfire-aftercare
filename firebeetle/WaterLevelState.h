@@ -3,6 +3,7 @@
 
 class WaterLevelState {
  public:
+  static constexpr unsigned LOW_SECTIONS = 2;   // fewer than 2 wet sections (10 mm) = tank low
   static constexpr unsigned FULL_SECTIONS = 15;
   void update(const uint8_t *data, bool valid, uint32_t now) {
     if (!valid) { dryCount_ = wetCount_ = 0; return; }
@@ -16,12 +17,13 @@ class WaterLevelState {
       if (contiguous && wet) ++levelSections_;
       else contiguous = false;
     }
-    // Isolated upper droplets do not establish a water level.
+    // Isolated upper droplets do not establish a water level; below 2 sections the
+    // pump intake is close to air, so treat it as low.
     // Full: 15 of 20 sections (75 mm) wet twice in a row, leaving headroom below the
     // top of the sensor; cleared once the level drops below 13 sections (65 mm).
     if (levelSections_ >= FULL_SECTIONS) { if (fullCount_ < 2) ++fullCount_; if (fullCount_ >= 2) full_ = true; }
     else { fullCount_ = 0; if (levelSections_ < FULL_SECTIONS - 2) full_ = false; }
-    if (levelSections_ == 0) {
+    if (levelSections_ < LOW_SECTIONS) {
       wetCount_ = 0;
       if (dryCount_ < 2) ++dryCount_;
       if (dryCount_ >= 2) { dry_ = true; settled_ = true; }
