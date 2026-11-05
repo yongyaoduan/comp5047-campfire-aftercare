@@ -89,7 +89,7 @@ Model downloads are versioned and SHA-256 checked. The USB webcam must be connec
 
 ### Start on boot
 
-Copy `pi/campfire.service` to `/etc/systemd/system/` on the Pi, then `sudo systemctl daemon-reload && sudo systemctl enable --now campfire`. It runs `app.py --profile pi3 --max-people 1` after every power-up and restarts it if it stops (`journalctl -u campfire -f` for logs; `sudo systemctl stop campfire` before a manual run).
+`pi/campfire.service` is a systemd user service (no sudo needed). On the Pi: `mkdir -p ~/.config/systemd/user && cp ~/gesture-pump/campfire.service ~/.config/systemd/user/`, `loginctl enable-linger "$USER"`, then `systemctl --user daemon-reload && systemctl --user enable --now campfire`. It runs `app.py --profile pi3 --max-people 1` about 20 s after every power-up and restarts it if it stops (`journalctl --user -u campfire -f` for logs; `systemctl --user stop campfire` before a manual run).
 
 ## FireBeetle build and upload
 

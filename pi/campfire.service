@@ -1,19 +1,19 @@
 # Start the Campfire Aftercare vision program on boot and restart it if it stops.
-# Install on the Pi:
-#   sudo cp ~/gesture-pump/campfire.service /etc/systemd/system/
-#   sudo systemctl daemon-reload && sudo systemctl enable --now campfire
-# Logs:  journalctl -u campfire -f      Stop for manual runs:  sudo systemctl stop campfire
+# Installed as a systemd *user* service, so no sudo is needed:
+#   mkdir -p ~/.config/systemd/user && cp ~/gesture-pump/campfire.service ~/.config/systemd/user/
+#   loginctl enable-linger "$USER"        # start at boot without anyone logging in
+#   systemctl --user daemon-reload && systemctl --user enable --now campfire
+# Logs:  journalctl --user -u campfire -f      Stop for manual runs:  systemctl --user stop campfire
 [Unit]
 Description=Campfire Aftercare vision (person + heart over BLE)
-After=bluetooth.target network-online.target
-Wants=bluetooth.target
+After=default.target
 
 [Service]
-User=campfire
-WorkingDirectory=/home/campfire/gesture-pump
-ExecStart=/home/campfire/gesture-pump/.venv/bin/python app.py --profile pi3 --max-people 1
+WorkingDirectory=%h/gesture-pump
+ExecStartPre=/bin/sleep 20
+ExecStart=%h/gesture-pump/.venv/bin/python app.py --profile pi3 --max-people 1
 Restart=always
 RestartSec=5
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
