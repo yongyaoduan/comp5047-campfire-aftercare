@@ -11,14 +11,15 @@
 //  - Coming back during the grace period: nothing happens.
 //    Coming back during the alarm / auto spray: alarm stops, fire prompt plays once.
 //  - Low water blocks every spray but never silences the station.
+//  - Tank full (all 20 sensor sections wet): "That's enough water, thank you" once.
 class ControlState {
  public:
   enum class Mode { Monitor, Grace, Alarm, AutoSpray };
-  enum class Voice { None, Water, Fire, Love, Spray };
+  enum class Voice { None, Water, Fire, Love, Spray, Full };
   struct Input {
     bool link = false, person = false, heart = false;
     bool temperatureKnown = false, hot = false;
-    bool waterKnown = false, lowWater = false;
+    bool waterKnown = false, lowWater = false, fullWater = false;
   };
   struct Output {
     bool green = false, red = false;
@@ -31,7 +32,7 @@ class ControlState {
   void reset() {
     mode_ = Mode::Monitor;
     previousHeart_ = false;
-    waterVoiceSent_ = sprayAnnounced_ = false;
+    waterVoiceSent_ = sprayAnnounced_ = fullAnnounced_ = false;
   }
 
   Output tick(uint32_t now, const Input &in) {
@@ -102,6 +103,13 @@ class ControlState {
     } else {
       waterVoiceSent_ = false;
     }
+    // Tank full: say so once (wait if another prompt is playing this tick).
+    const bool tankFull = in.waterKnown && in.fullWater;
+    if (!tankFull) fullAnnounced_ = false;
+    else if (!fullAnnounced_ && out.voice == Voice::None) {
+      out.voice = Voice::Full;
+      fullAnnounced_ = true;
+    }
     out.mode = mode_;
     return out;
   }
@@ -109,5 +117,5 @@ class ControlState {
  private:
   Mode mode_ = Mode::Monitor;
   uint32_t phaseStarted_ = 0, waterVoiceAt_ = 0;
-  bool previousHeart_ = false, waterVoiceSent_ = false, sprayAnnounced_ = false;
+  bool previousHeart_ = false, waterVoiceSent_ = false, sprayAnnounced_ = false, fullAnnounced_ = false;
 };

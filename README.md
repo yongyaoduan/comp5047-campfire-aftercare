@@ -13,12 +13,13 @@ Raspberry Pi vision and Bluetooth LE, FireBeetle ESP32-E two-LED control, spoken
 
 **Both LEDs continue to indicate their states while spraying.** There is no LED for the heart or for a low tank: a held heart is answered by "I love you too" and, when the bowl is hot, by water; a low tank is announced by the repeating water prompt.
 
-The committed English WAV files and flash-resident samples are generated with macOS Samantha at 155 words/minute:
+The committed English WAV files and flash-resident samples are generated with macOS Samantha at 100 words/minute, then high-passed, compressed to full DAC swing and played 5% slower (15.2 kHz) for a calm, loud voice (`firebeetle/audio/build_audio.py`):
 
 - [I need some water.](firebeetle/audio/water.wav) — repeats every 5 seconds while the tank is low and someone is in view.
 - [Fire's still burning. Make a heart, I'll put it out.](firebeetle/audio/fire.wav) — once, when someone comes back during the alarm or an automatic spray.
 - [I love you too.](firebeetle/audio/love.wav) — once per new heart gesture.
 - [Putting the fire out.](firebeetle/audio/spray.wav) — once, when an automatic spray starts.
+- [That's enough water, thank you.](firebeetle/audio/full.wav) — once, when all 20 sections of the water sensor are wet (tank full); it can repeat only after the level has dropped below 18 sections.
 
 Playback is offline. The WAV files and generated `AudioSamples.h` are included; macOS is needed only to regenerate them. Audio runs through I2S DMA on GPIO25 in its own task, independently of the control loop and sensor reads. An alarm interrupts speech. A due low-water warning takes priority over another spoken prompt.
 

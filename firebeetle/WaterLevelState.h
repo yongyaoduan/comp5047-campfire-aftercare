@@ -16,6 +16,9 @@ class WaterLevelState {
       else contiguous = false;
     }
     // Isolated upper droplets do not establish a water level.
+    // Full: all 20 sections wet twice in a row; cleared once the level drops below 18.
+    if (levelSections_ == 20) { if (fullCount_ < 2) ++fullCount_; if (fullCount_ >= 2) full_ = true; }
+    else { fullCount_ = 0; if (levelSections_ < 18) full_ = false; }
     if (levelSections_ == 0) {
       wetCount_ = 0;
       if (dryCount_ < 2) ++dryCount_;
@@ -29,11 +32,12 @@ class WaterLevelState {
   bool settled() const { return settled_; }
   bool fresh(uint32_t now) const { return valid_ && uint32_t(now-lastValid_) < 1000; }
   bool dry(uint32_t now) const { return fresh(now) && settled_ && dry_; }
+  bool full(uint32_t now) const { return fresh(now) && full_; }
   unsigned levelMM() const { return levelSections_ * 5; }
   unsigned wetSections() const { return wetSections_; }
  private:
   uint32_t lastValid_ = 0;
   unsigned wetSections_ = 0, levelSections_ = 0;
-  uint8_t dryCount_ = 0, wetCount_ = 0;
-  bool valid_ = false, settled_ = false, dry_ = false;
+  uint8_t dryCount_ = 0, wetCount_ = 0, fullCount_ = 0;
+  bool valid_ = false, settled_ = false, dry_ = false, full_ = false;
 };

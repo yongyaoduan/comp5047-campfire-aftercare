@@ -59,6 +59,7 @@ class AudioPlayer {
           case ControlState::Voice::Fire: clip = AUDIO_FIRE; count = sizeof(AUDIO_FIRE); break;
           case ControlState::Voice::Love: clip = AUDIO_LOVE; count = sizeof(AUDIO_LOVE); break;
           case ControlState::Voice::Spray: clip = AUDIO_SPRAY; count = sizeof(AUDIO_SPRAY); break;
+          case ControlState::Voice::Full: clip = AUDIO_FULL; count = sizeof(AUDIO_FULL); break;
           default: break;
         }
       }

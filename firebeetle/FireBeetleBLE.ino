@@ -101,7 +101,7 @@ void setup() {
   advertising->start();
   Serial.println("Two LEDs: green16 person, red17 fire; audio25 (amp on 5 V VCC) pump26 SDA21 SCL22");
   Serial.println("0/1=person absent/present, 4/5=heart held/released, 6=STOP");
-  Serial.println("w/f/l/p=voice test (water/fire/love/spray); serial commands expire unless refreshed");
+  Serial.println("w/f/l/p/e=voice test (water/fire/love/spray/enough); serial commands expire unless refreshed");
 }
 
 void loop() {
@@ -122,6 +122,7 @@ void loop() {
     if (c == 'f') audio.speak(ControlState::Voice::Fire);
     if (c == 'l') audio.speak(ControlState::Voice::Love);
     if (c == 'p') audio.speak(ControlState::Voice::Spray);
+    if (c == 'e') audio.speak(ControlState::Voice::Full);
   }
   uint8_t cmd;
   while (xQueueReceive(events, &cmd, 0) == pdTRUE) {
@@ -164,6 +165,7 @@ void loop() {
   input.hot = temperature.hot(now);
   input.waterKnown = lastWaterValid && water.fresh(now);
   input.lowWater = water.dry(now);
+  input.fullWater = water.full(now);
   // Require two valid samples before allowing pumping (settled wet or dry).
   input.waterKnown = input.waterKnown && water.settled();
   const auto out = controller.tick(now, input);
@@ -176,9 +178,9 @@ void loop() {
   }
   if (uint32_t(now - lastReport) >= 1000) {
     lastReport = now;
-    Serial.printf("mode=%d link=%d person=%d heart=%d temp_ok=%d object_C=%.2f water_ok=%d level_mm=%u low=%d pump=%d GR=%d%d\n",
+    Serial.printf("mode=%d link=%d person=%d heart=%d temp_ok=%d object_C=%.2f water_ok=%d level_mm=%u low=%d full=%d pump=%d GR=%d%d\n",
       int(out.mode), link, input.person, input.heart, input.temperatureKnown,
-      temperature.object(), input.waterKnown, water.levelMM(), input.lowWater,
+      temperature.object(), input.waterKnown, water.levelMM(), input.lowWater, input.fullWater,
       out.pump, out.green, out.red);
   }
   delay(5);

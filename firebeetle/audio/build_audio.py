@@ -16,7 +16,8 @@ ROOT = Path(__file__).resolve().parent
 PHRASES = [('water', 'I need some water.'),
            ('fire', "Fire's still burning. Make a heart, I'll put it out."),
            ('love', 'I love you too.'),
-           ('spray', 'Putting the fire out.')]
+           ('spray', 'Putting the fire out.'),
+           ('full', "That's enough water, thank you.")]
 RATE = 16000        # WAV rate
 PLAY_RATE = 15200   # DAC rate: 5% slower than the WAVs, for a calmer voice
 HIGHPASS_HZ = 300   # below this the small speaker only wastes amplitude
