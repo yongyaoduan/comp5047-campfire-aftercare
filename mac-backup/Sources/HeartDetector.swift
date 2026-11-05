@@ -22,29 +22,42 @@ struct HeartUpdate {
     let ended: Bool
 }
 
-/// Geometric prototypes calibrated against the two supplied example photos.
-/// Vision reports hand landmarks, not a built-in heart-gesture classification.
+/// Two-hand heart with time filtering (laptop program, Nov 2026):
+/// a heart must be seen for 2 s (up to two missed checks, 0.35 s, do not break the run)
+/// before it counts, and must be gone for 1 s before it is released. The laptop
+/// checks hands about 10 times a second, so this rejects one-frame false matches
+/// and keeps the pump on through brief landmark dropouts.
 final class HeartDetector {
-    // Ignore a brief landmark miss while a real heart is being held.
-    // This is release hysteresis, not a cooldown before the next gesture.
-    var releaseGraceSeconds: TimeInterval = 0.30
+    var confirmSeconds: TimeInterval = 2.0
+    var releaseGraceSeconds: TimeInterval = 1.0
+    var gapTolerance: TimeInterval = 0.35
     private var activeGesture: HeartGesture?
+    private var candidateSince: TimeInterval?
     private var lastMatchAt: TimeInterval = -100
 
     func observe(_ hands: [HeartHand], at now: TimeInterval) -> HeartUpdate {
         guard let gesture = Self.classify(hands) else {
-            if let activeGesture, now - lastMatchAt < releaseGraceSeconds {
-                return HeartUpdate(active: activeGesture, started: nil, ended: false)
+            if let activeGesture {
+                if now - lastMatchAt < releaseGraceSeconds {
+                    return HeartUpdate(active: activeGesture, started: nil, ended: false)
+                }
+                self.activeGesture = nil
+                candidateSince = nil
+                return HeartUpdate(active: nil, started: nil, ended: true)
             }
-            let ended = activeGesture != nil
-            activeGesture = nil
-            return HeartUpdate(active: nil, started: nil, ended: ended)
+            if now - lastMatchAt > gapTolerance { candidateSince = nil }
+            return HeartUpdate(active: nil, started: nil, ended: false)
         }
-
-        let started = activeGesture == nil ? gesture : nil
-        activeGesture = gesture
+        if candidateSince == nil || (activeGesture == nil && now - lastMatchAt > gapTolerance) {
+            candidateSince = now
+        }
         lastMatchAt = now
-        return HeartUpdate(active: gesture, started: started, ended: false)
+        if let activeGesture { return HeartUpdate(active: activeGesture, started: nil, ended: false) }
+        guard let since = candidateSince, now - since >= confirmSeconds else {
+            return HeartUpdate(active: nil, started: nil, ended: false)
+        }
+        activeGesture = gesture
+        return HeartUpdate(active: gesture, started: gesture, ended: false)
     }
 
     static func classify(_ hands: [HeartHand]) -> HeartGesture? {
@@ -124,5 +137,30 @@ final class HeartDetector {
 
     private static func midpoint(_ a: CGPoint, _ b: CGPoint) -> CGPoint {
         CGPoint(x: (a.x + b.x) / 2, y: (a.y + b.y) / 2)
+    }
+}
+
+/// "Someone here" with the same kind of filter: people must be seen for 2 s
+/// (misses up to 0.5 s tolerated) before presence is reported, and must be
+/// gone for 2 s before absence is reported.
+final class PresenceFilter {
+    var confirmSeconds: TimeInterval = 2.0
+    var releaseSeconds: TimeInterval = 2.0
+    var gapTolerance: TimeInterval = 0.5
+    private(set) var present = false
+    private var since: TimeInterval?
+    private var lastSeenAt: TimeInterval = -100
+
+    /// Returns the new state when it changes, nil otherwise.
+    func observe(_ seen: Bool, at now: TimeInterval) -> Bool? {
+        if seen {
+            if since == nil || (!present && now - lastSeenAt > gapTolerance) { since = now }
+            lastSeenAt = now
+            if !present, let since, now - since >= confirmSeconds { present = true; return true }
+            return nil
+        }
+        if present, now - lastSeenAt >= releaseSeconds { present = false; since = nil; return false }
+        if !present, now - lastSeenAt > gapTolerance { since = nil }
+        return nil
     }
 }

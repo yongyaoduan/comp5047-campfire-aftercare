@@ -64,38 +64,38 @@ let loweredThumb = HeartHand(
     middleTip: finger.middleTip
 )
 check(HeartDetector.classify([loweredThumb]) == nil, "A folded thumb must not match")
-let firstStart = detector.observe(heart, at: 0)
-check(firstStart.started == .twoHand && firstStart.active == .twoHand,
-      "The first recognized heart frame requests the pump immediately")
-for time in [0.2, 0.4, 0.6, 0.8, 1.0] {
-    let update = detector.observe(heart, at: time)
-    check(update.active == .twoHand && update.started == nil,
-          "Holding a heart keeps its pump request active")
+// Timing: 2 s of hearts to start, 1 s without to stop (checks every 0.1 s).
+func run(_ d: HeartDetector, _ frames: [HeartHand]?, from t0: Double, to t1: Double) -> [HeartUpdate] {
+    let n0 = Int((t0 * 10).rounded()), n1 = Int((t1 * 10).rounded())
+    return (n0...n1).map { d.observe(frames ?? [], at: Double($0) / 10) }
 }
-let briefMiss = detector.observe([], at: 1.1)
-check(!briefMiss.ended && briefMiss.active == .twoHand,
-      "One missed landmark frame must not interrupt the pump")
-check(detector.observe(heart, at: 1.2).active == .twoHand,
-      "A returning match keeps the same heart active")
-let firstEnd = detector.observe([], at: 1.6)
-check(firstEnd.ended && firstEnd.active == nil,
-      "A sustained absence ends the heart request")
+let d1 = HeartDetector()
+check(run(d1, heart, from: 0, to: 1.9).allSatisfy { $0.active == nil }, "No pump before 2 s of heart")
+let s1 = d1.observe(heart, at: 2.0)
+check(s1.started == .twoHand, "Heart counts after 2 s")
+check(d1.observe([], at: 2.1).active == .twoHand, "One missed frame keeps the heart")
+check(run(d1, nil, from: 2.2, to: 2.9).allSatisfy { $0.active == .twoHand && !$0.ended }, "Under 1 s without a heart keeps it")
+check(d1.observe([], at: 3.0).ended, "1 s without a heart releases it")
 
-let nextStart = detector.observe(heart, at: 1.61)
-check(nextStart.started == .twoHand && nextStart.active == .twoHand,
-      "A new heart starts immediately without a cooldown")
-check(detector.observe([finger], at: 1.8).active == .twoHand, "Grace covers one non-heart frame")
-check(detector.observe([finger], at: 2.2).ended, "A finger heart does not keep the request alive")
+let d2 = HeartDetector()
+_ = run(d2, heart, from: 0, to: 1.5)
+_ = d2.observe([], at: 1.6); _ = d2.observe([], at: 1.7)   // 0.2 s miss: tolerated
+_ = d2.observe(heart, at: 1.8); _ = d2.observe(heart, at: 1.9)
+check(d2.observe(heart, at: 2.0).started == .twoHand, "A short miss does not restart the 2 s count")
+let d3 = HeartDetector()
+_ = run(d3, heart, from: 0, to: 1.5)
+_ = run(d3, nil, from: 1.6, to: 2.1)                       // 0.6 s miss: run broken
+check(d3.observe(heart, at: 2.2).active == nil, "A long miss restarts the count")
+check(run(d3, heart, from: 2.3, to: 4.1).contains { $0.started != nil } == false, "Not yet 2 s since restart")
+check(d3.observe(heart, at: 4.2).started == .twoHand, "Counts 2 s after the restart")
 
-let afterFailedAttempt = HeartDetector()
-check(afterFailedAttempt.observe(heart, at: 0).started == .twoHand,
-      "A short heart can start the pump")
-check(!afterFailedAttempt.observe([], at: 0.1).ended,
-      "A short miss is tolerated")
-check(afterFailedAttempt.observe([], at: 0.4).ended,
-      "A failed attempt ends after the release grace")
-check(afterFailedAttempt.observe(heart, at: 0.41).started == .twoHand,
-      "A failed attempt does not impose a cooldown")
+let p = PresenceFilter()
+var changes: [(Double, Bool)] = []
+for i in 0...30 { let t = Double(i) * 0.2; if let c = p.observe(i < 15, at: t) { changes.append((t, c)) } }
+check(changes.count == 2 && abs(changes[0].0 - 2.0) < 1e-6 && changes[0].1, "Person after 2 s")
+check(abs(changes[1].0 - 4.8) < 1e-6 && !changes[1].1, "Nobody 2 s after the last detection")
+let flicker = PresenceFilter()
+check((0..<20).allSatisfy { flicker.observe($0 % 4 == 0, at: Double($0) * 0.2) == nil }, "A flickering false detection never becomes a person")
 print("HeartDetector tests passed")
 }
 }

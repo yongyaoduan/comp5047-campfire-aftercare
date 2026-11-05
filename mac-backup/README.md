@@ -23,8 +23,11 @@ safety decision.
   camera is used.
 * Two-hand heart only. Waves are still detected for the on-screen log but are
   **not** sent (the final firmware ignores command `2`).
-* "Nobody" is declared 1.5 s after the last person detection (the Pi takes
-  longer because it runs at ~1 FPS). The firmware's 5 s grace is unchanged.
+* Time filters against false alarms: someone must be seen for 2 s before
+  "person" is sent and be gone for 2 s before "nobody" is sent; a heart must be
+  seen for 2 s before "heart held" is sent, and gone for 1 s before "heart
+  released" (a couple of missed checks do not break a run). The firmware's 5 s
+  grace is unchanged.
 
 ## Tests
 
@@ -36,7 +39,9 @@ build/tests/PhotoRegression <corpus-dir-with-results.json> out.json
 On the team's 264-photo corpus (5 Nov 2026, MacBook Air, the same corpus the rules
 were tuned on, so a regression check rather than an independent test): people
 128/139, false "person" 3/125 (two dogs, a pile of clothes), hearts 52/73, false
-heart 0/190; median 21 ms per frame (p90 50 ms).
+heart 0/190; median 21–33 ms per frame including the second look for small
+hands. (Still photos give the same answer on every frame, so the 2 s filters do
+not change these counts; they matter for the live camera.)
 
 ## Run
 

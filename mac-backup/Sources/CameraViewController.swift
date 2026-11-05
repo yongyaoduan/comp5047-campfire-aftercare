@@ -13,6 +13,7 @@ final class CameraViewController: NSViewController, AVCaptureVideoDataOutputSamp
     private let logView = NSTextView()
     private let waveDetector = WaveDetector()
     private let heartDetector = HeartDetector()
+    private let presenceFilter = PresenceFilter()
     private let bluetooth = BluetoothBridge()
     private let dryRun = ProcessInfo.processInfo.arguments.contains("--dry-run")
 
@@ -314,19 +315,10 @@ final class CameraViewController: NSViewController, AVCaptureVideoDataOutputSamp
 
     private func updatePresence(boxes: [CGRect], handSeen: Bool, now: TimeInterval) {
         lastHumanBoxes = boxes
-        if boxes.isEmpty && !handSeen {
-            humanPositiveFrames = 0
-            if presence, now - lastHumanSeenAt > 1.5 {
-                presence = false
-                publishPresence(false)
-            }
-        } else {
-            lastHumanSeenAt = now
-            humanPositiveFrames += 1
-            if !presence, humanPositiveFrames >= 2 {
-                presence = true
-                publishPresence(true)
-            }
+        // 2 s of continuous detection to report a person, 2 s without to report nobody.
+        if let change = presenceFilter.observe(!boxes.isEmpty || handSeen, at: now) {
+            presence = change
+            publishPresence(change)
         }
     }
 

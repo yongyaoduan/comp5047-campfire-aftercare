@@ -35,16 +35,22 @@ struct PhotoRegression {
             guard let ns = NSImage(contentsOf: path),
                   let cg = ns.cgImage(forProposedRect: nil, context: nil, hints: nil),
                   let frame = letterbox(cg) else { print("skip", path.lastPathComponent); continue }
-            let heart = HeartDetector()
-            var positives = 0, green = false, pump = false
-            for i in 0..<5 {
+            // A still photo gives the same result on every frame, so it is analysed
+            // twice (timing + a consistency check) and the result is replayed as a
+            // live camera would see it for 3 s: hands every 0.1 s, people every 0.2 s,
+            // through the same 2 s confirmation filters as the app.
+            let heart = HeartDetector(), presence = PresenceFilter()
+            var results: [VisionPipeline.Frame] = []
+            for _ in 0..<2 {
                 let start = Date()
-                let result = try VisionPipeline.analyze(VNImageRequestHandler(cgImage: frame, orientation: .up), people: true, hands: true)
-                let someone = result.someoneHere, hands = result.hands
+                results.append(try VisionPipeline.analyze(VNImageRequestHandler(cgImage: frame, orientation: .up), people: true, hands: true))
                 times.append(Date().timeIntervalSince(start))
-                positives = someone ? positives + 1 : 0
-                if positives >= 2 { green = true }
-                if heart.observe(hands, at: Double(i) * 0.1).active != nil { pump = true }
+            }
+            var green = false, pump = false
+            for step in 0...30 {
+                let t = Double(step) * 0.1, r = results[step % 2]
+                if heart.observe(r.hands, at: t).active != nil { pump = true }
+                if step % 2 == 0, presence.observe(r.someoneHere, at: t) == true { green = true }
             }
             let row: [String: Any] = ["id": sample["id"]!, "expected_person": sample["expected_person"] ?? NSNull(),
                                       "expected_heart": sample["expected_heart"] ?? NSNull(), "green": green, "pump": pump]
@@ -65,7 +71,7 @@ struct PhotoRegression {
         ]
         let host = ProcessInfo.processInfo
         let result: [String: Any] = ["program": "mac-backup (Apple Vision)", "os": host.operatingSystemVersionString,
-            "policy": "640x480 letterbox, five frames per image (VisionPipeline.analyze with people + hands every frame), person = 2 positive frames, heart = HeartDetector; single thread",
+            "policy": "640x480 letterbox, five frames per image (VisionPipeline.analyze run twice per photo, result replayed for 3 s through the app's 2 s confirmation filters), person = 2 positive frames, heart = HeartDetector; single thread",
             "summary": summary, "samples": rows]
         try JSONSerialization.data(withJSONObject: result, options: [.prettyPrinted, .sortedKeys]).write(to: output)
         print(summary)
