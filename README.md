@@ -19,7 +19,7 @@ The committed English WAV files and flash-resident samples are generated with ma
 - [Fire's still burning. Make a heart, I'll put it out.](firebeetle/audio/fire.wav) — once, when someone comes back during the alarm or an automatic spray.
 - [I love you too.](firebeetle/audio/love.wav) — once per new heart gesture.
 - [Putting the fire out.](firebeetle/audio/spray.wav) — once, when an automatic spray starts.
-- [That's enough water, thank you.](firebeetle/audio/full.wav) — once, when all 20 sections of the water sensor are wet (tank full); it can repeat only after the level has dropped below 18 sections.
+- [Enough water, thank you.](firebeetle/audio/full.wav) — once, when the bottom 15 of the sensor's 20 sections (75 mm) are wet, leaving headroom below the top of the 4 L tank; it can repeat only after the level has dropped below 13 sections.
 
 Playback is offline. The WAV files and generated `AudioSamples.h` are included; macOS is needed only to regenerate them. Audio runs through I2S DMA on GPIO25 in its own task, independently of the control loop and sensor reads. An alarm interrupts speech. A due low-water warning takes priority over another spoken prompt.
 

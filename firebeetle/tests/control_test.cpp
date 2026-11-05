@@ -89,7 +89,7 @@ int main() {
     out = d.tick(13500, dry);
     assert(out.pump && out.voice == C::Voice::Spray);
   }
-  { // Tank full: "That's enough water" once, again only after it was not full.
+  { // Tank full: "Enough water, thank you" once, again only after it was not full.
     C c; auto in = ready(true); in.hot = false; in.fullWater = true;
     assert(c.tick(0, in).voice == C::Voice::Full);
     assert(c.tick(100, in).voice == C::Voice::None);
@@ -123,12 +123,12 @@ int main() {
     raw[3] = 249; water.update(raw, true, 30);
     assert(water.levelMM() == 0); // Isolated upper film ignored.
     assert(!water.fresh(2000));
-    // Full tank: all 20 sections wet twice; clears only below 18 sections.
-    for (auto &r : raw) r = 249;
+    // Full tank: 15 contiguous wet sections twice; clears only below 13 sections.
+    for (int i = 0; i < 20; ++i) raw[i] = i < 15 ? 249 : 0;
     water.update(raw, true, 40); assert(!water.full(40));
-    water.update(raw, true, 50); assert(water.full(50) && water.levelMM() == 100);
-    raw[19] = raw[18] = 0; water.update(raw, true, 60); assert(water.full(60));   // 18 wet: hold
-    raw[17] = 0; water.update(raw, true, 70); assert(!water.full(70));            // 17 wet: clear
+    water.update(raw, true, 50); assert(water.full(50) && water.levelMM() == 75);
+    raw[14] = raw[13] = 0; water.update(raw, true, 60); assert(water.full(60));   // 13 wet: hold
+    raw[12] = 0; water.update(raw, true, 70); assert(!water.full(70));            // 12 wet: clear
     TemperatureState temp;
     temp.update(44.9f, 20, true, 0); assert(!temp.hot(0));
     temp.update(45, 20, true, 1);    assert(temp.hot(1));

@@ -11,7 +11,7 @@
 //  - Coming back during the grace period: nothing happens.
 //    Coming back during the alarm / auto spray: alarm stops, fire prompt plays once.
 //  - Low water blocks every spray but never silences the station.
-//  - Tank full (all 20 sensor sections wet): "That's enough water, thank you" once.
+//  - Tank full (15 of 20 sensor sections wet): "Enough water, thank you" once.
 class ControlState {
  public:
   enum class Mode { Monitor, Grace, Alarm, AutoSpray };
