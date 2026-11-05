@@ -183,11 +183,14 @@ class ControlTiming:
 
 
 # At ~1 FPS a good result takes ~1s to compute, and the next one arrives
-# ~1s later. Bound both intervals; never give an old result an unlimited lease.
-PI3_TIMING = ControlTiming(max_inference_age=1.2, max_result_gap=1.2,
-                          max_frame_age=2.4, person_result_gap=2.5,
+# ~1s later; a throttled Pi 3B+ (weak supply) measured 1.2-1.3 s per frame.
+# Bound both intervals at 2 s; never give an old result an unlimited lease.
+# Two consecutive heart frames are still required, and one negative frame
+# still revokes the heart at once.
+PI3_TIMING = ControlTiming(max_inference_age=2.0, max_result_gap=2.0,
+                          max_frame_age=3.0, person_result_gap=2.5,
                           person_inference_age=2.5, person_frame_age=5.0,
-                          candidate_inference_age=1.6, confirm_frames=2, release_grace=0.)
+                          candidate_inference_age=2.4, confirm_frames=2, release_grace=0.)
 
 
 class GestureState:

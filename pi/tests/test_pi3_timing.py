@@ -53,10 +53,10 @@ class Pi3TimingTests(unittest.TestCase):
         state = self.make_active()
         policy = CommandPolicy(state)
         self.assertIn(4, policy.commands(1.95))
-        self.assertTrue(state.safe_heart(3.14))
-        self.assertFalse(state.safe_heart(3.16))
-        self.assertIn(5, policy.commands(3.16))
-        self.assertTrue(state.safe_person(3.16))
+        self.assertTrue(state.safe_heart(3.94))
+        self.assertFalse(state.safe_heart(3.96))
+        self.assertIn(5, policy.commands(3.96))
+        self.assertTrue(state.safe_person(3.96))
         self.assertIn(6, policy.commands(4.46))
         state.observe(Observation(4., True, None, TWO_HAND, completed_at=4.95))
         self.assertFalse(state.safe_heart(4.95))
@@ -67,13 +67,13 @@ class Pi3TimingTests(unittest.TestCase):
         state = self.make_active()
         state.observe(Observation(1., True, None, TWO_HAND, completed_at=3.0))
         self.assertEqual(state.last_result, 1.95)
-        self.assertFalse(state.safe_heart(3.16))
-        state.observe(Observation(4., True, None, TWO_HAND, completed_at=5.61))
-        self.assertFalse(state.safe_heart(5.61))
-        self.assertTrue(state.safe_person(5.61))
-        self.assertFalse(state.camera_stale(5.61))
-        state.observe(Observation(6., True, None, TWO_HAND, completed_at=6.95))
-        self.assertFalse(state.safe_heart(6.95))
+        self.assertFalse(state.safe_heart(3.96))
+        state.observe(Observation(4., True, None, TWO_HAND, completed_at=6.1))
+        self.assertFalse(state.safe_heart(6.1))
+        self.assertTrue(state.safe_person(6.1))
+        self.assertFalse(state.camera_stale(6.1))
+        state.observe(Observation(7.2, True, None, TWO_HAND, completed_at=8.2))
+        self.assertFalse(state.safe_heart(8.2))
 
     def test_out_of_order_positive_does_not_override_release(self):
         state = self.make_active()
@@ -117,14 +117,29 @@ class Pi3TimingTests(unittest.TestCase):
     def test_slow_candidates_never_hold_or_arm_and_negative_clears(self):
         state = self.make_active()
         for t in (2., 3.4, 4.8):
-            state.observe(Observation(t, True, None, TWO_HAND, completed_at=t+1.31))
-            self.assertFalse(state.safe_heart(t+1.31))
+            state.observe(Observation(t, True, None, TWO_HAND, completed_at=t+2.1))
+            self.assertFalse(state.safe_heart(t+2.1))
         state.observe(Observation(6.2, True, None, [], completed_at=7.2))
         state.observe(Observation(7.2, True, None, TWO_HAND, completed_at=8.2))
         self.assertFalse(state.safe_heart(8.2))
 
     def test_slow_candidate_expires_after_result_gap(self):
         state = GestureState(PI3_TIMING)
-        state.observe(Observation(0., True, None, TWO_HAND, completed_at=1.31))
-        state.observe(Observation(2., True, None, TWO_HAND, completed_at=3.))
-        self.assertFalse(state.safe_heart(3.))
+        state.observe(Observation(0., True, None, TWO_HAND, completed_at=2.2))
+        state.observe(Observation(4.5, True, None, TWO_HAND, completed_at=5.5))
+        self.assertFalse(state.safe_heart(5.5))
+
+    def test_throttled_pi_1_3s_frames_hold_without_gaps(self):
+        # Measured on a throttled Pi 3B+ (weak supply): 1.2-1.3 s per frame.
+        state = GestureState(PI3_TIMING)
+        policy = CommandPolicy(state)
+        for i in range(12):
+            t = i * 1.3
+            state.observe(Observation(t, True, None, TWO_HAND, completed_at=t + 1.3))
+            if i >= 1:
+                for dt in (0., .65, 1.29):
+                    self.assertTrue(state.safe_heart(t + 1.3 + dt))
+                    self.assertNotIn(5, policy.commands(t + 1.3 + dt))
+        state.observe(Observation(15.6, True, None, [], completed_at=16.9))
+        self.assertFalse(state.safe_heart(16.9))
+        self.assertIn(5, policy.commands(16.9))
