@@ -28,14 +28,14 @@ static bool lastWaterValid = false, lastTempValid = false;
 static uint32_t lastCommand = 0, lastPerson = 0, lastHeart = 0, lastReport = 0;
 static uint8_t lastWaterRaw[20] = {};
 static bool printRaw = false;
-// Start-up standby: the first 10 s of IR readings give the room temperature; after about 30 s,
-// once the IR thermometer is calibrated and the water sensor answers on I2C, both LEDs blink
-// twice and the station starts. Until then the pump stays off and nothing is spoken.
-// The water sensor must be dry during standby (it calibrates at power-up); put it in the tank
-// after the double blink. If it is still not ready after 30 s, the red LED flickers fast.
-constexpr uint32_t STANDBY_MS = 30000, READY_BLINK_MS = 500;   // 0.5 s on, 0.5 s off, twice
+// Start-up standby (about 10 s): both LEDs blink together (0.5 s on, 0.5 s off) the whole time
+// while the first 10 s of IR readings give the room temperature. The blinking stops once the IR
+// thermometer is calibrated and the water sensor answers on I2C; then the station starts.
+// Until then the pump stays off and nothing is spoken. The water sensor must be dry during
+// standby (it calibrates at power-up); put it in the tank after the blinking stops.
+// If it is still not ready after 30 s, the red LED flickers fast instead.
+constexpr uint32_t STANDBY_MS = 10000, FAULT_MS = 30000, STANDBY_BLINK_MS = 500;
 static bool ready = false;
-static uint32_t readyAt = 0;
 
 struct SensorSample {
   uint8_t water[20];
@@ -109,7 +109,7 @@ void setup() {
   advertising->addServiceUUID(SERVICE_UUID);
   advertising->setScanResponse(true);
   advertising->start();
-  Serial.println("Standby about 30 s (room temperature from the first 10 s; keep the water sensor dry), then both LEDs blink twice");
+  Serial.println("Standby about 10 s: both LEDs blink while room temperature is measured (keep the water sensor dry); blinking stops when ready");
   Serial.println("Two LEDs: green16 person, red17 fire (room + 10 C); audio25 (amp on 5 V VCC) pump26 SDA21 SCL22");
   Serial.println("0/1=person absent/present, 4/5=heart held/released, 6=STOP");
   Serial.println("w/f/l/p/e=voice test (water/fire/love/spray/enough); r=toggle raw water pads; serial commands expire unless refreshed");
@@ -168,14 +168,19 @@ void loop() {
     const bool tempOK = lastTempValid && temperature.fresh(now) && temperature.calibrated();
     if (now >= STANDBY_MS && waterSensorOK && tempOK) {
       ready = true;
-      readyAt = now;
       controller.reset();
       Serial.printf("STANDBY DONE: room_C=%.2f (window restarts %u), water sensor OK -> put the water sensor in the tank now\n",
         temperature.room(), temperature.calibrationRestarts());
     } else {
       digitalWrite(PUMP, LOW);
-      digitalWrite(GREEN, LOW);
-      digitalWrite(RED, (now >= STANDBY_MS && (now / 100) % 2) ? HIGH : LOW);   // fast flicker = fault
+      if (now >= FAULT_MS) {                                      // fast red flicker = fault
+        digitalWrite(GREEN, LOW);
+        digitalWrite(RED, (now / 100) % 2 ? HIGH : LOW);
+      } else {                                                    // standby: both LEDs blink
+        const bool on = (now / STANDBY_BLINK_MS) % 2 == 0;
+        digitalWrite(GREEN, on ? HIGH : LOW);
+        digitalWrite(RED, on ? HIGH : LOW);
+      }
       if (uint32_t(now - lastReport) >= 1000) {
         lastReport = now;
         Serial.printf("standby %lus: temp_ok=%d calibrated=%d room_C=%.2f object_C=%.2f water_i2c=%d\n",
@@ -185,14 +190,6 @@ void loop() {
       delay(5);
       return;
     }
-  }
-  if (uint32_t(now - readyAt) < 4 * READY_BLINK_MS) {           // double blink: ready
-    const bool on = (uint32_t(now - readyAt) / READY_BLINK_MS) % 2 == 0;
-    digitalWrite(PUMP, LOW);
-    digitalWrite(GREEN, on ? HIGH : LOW);
-    digitalWrite(RED, on ? HIGH : LOW);
-    delay(5);
-    return;
   }
   // All expiry checks run independently of I2C and audio playback.
   const bool link = armed && transportSeen && uint32_t(now - lastCommand) < 2000;
