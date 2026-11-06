@@ -33,7 +33,7 @@ static bool printRaw = false;
 // twice and the station starts. Until then the pump stays off and nothing is spoken.
 // The water sensor must be dry during standby (it calibrates at power-up); put it in the tank
 // after the double blink. If it is still not ready after 30 s, the red LED flickers fast.
-constexpr uint32_t STANDBY_MS = 30000, READY_BLINK_MS = 300;
+constexpr uint32_t STANDBY_MS = 30000, READY_BLINK_MS = 500;   // 0.5 s on, 0.5 s off, twice
 static bool ready = false;
 static uint32_t readyAt = 0;
 
