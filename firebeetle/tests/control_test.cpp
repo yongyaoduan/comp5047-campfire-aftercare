@@ -1,3 +1,4 @@
+#include <math.h>
 #include "../ControlState.h"
 #include "../WaterLevelState.h"
 #include "../TemperatureState.h"
@@ -115,7 +116,7 @@ int main() {
     c.tick(0xfffff000u, in);
     assert(c.tick(uint32_t(0xfffff000u + 5000u), in).alarm);
   }
-  { // Sensors: stale water is not "empty"; temperature has 45/40 °C hysteresis.
+  { // Sensors: stale water is not "empty"; temperature is relative to the room (+10 / +7 C).
     WaterLevelState water; uint8_t raw[20] = {};
     water.update(raw, false, 0); assert(!water.fresh(0));
     water.update(raw, true, 10); assert(!water.settled());
@@ -149,11 +150,31 @@ int main() {
     raw[14] = raw[13] = 0; water.update(raw, true, 60); assert(water.full(60));   // 13 wet: hold
     raw[12] = 0; water.update(raw, true, 70); assert(!water.full(70));            // 12 wet: clear
     TemperatureState temp;
-    temp.update(44.9f, 20, true, 0); assert(!temp.hot(0));
-    temp.update(45, 20, true, 1);    assert(temp.hot(1));
-    temp.update(41, 20, true, 2);    assert(temp.hot(2));     // still hot above 40
-    temp.update(39.9f, 20, true, 3); assert(!temp.hot(3));
-    temp.update(44, 20, true, 4);    assert(!temp.hot(4));    // must reach 45 again
+    // Calibration: 10 s of room readings at 4 Hz -> room = mean (22.5 C here).
+    uint32_t t = 0;
+    for (; t <= 10000; t += 250) {
+      temp.update((t / 250) % 2 ? 22.4f : 22.6f, 22, true, t);
+      if (t < 10000) assert(!temp.calibrated() && !temp.hot(t));
+    }
+    assert(temp.calibrated() && fabsf(temp.room() - 22.5f) < 0.01f);
+    auto feed = [&](float c, int n) { for (int i = 0; i < n; ++i) { t += 250; temp.update(c, 22, true, t); } };
+    feed(31.2f, 8);  assert(!temp.hot(t));        // 30 cm candle: +8.7 C, not fire
+    feed(38.f, 1);   feed(24.f, 3); assert(!temp.hot(t));   // single spike ignored
+    feed(55.f, 3);   assert(!temp.hot(t));        // 3 samples: not yet
+    feed(55.f, 1);   assert(temp.hot(t));         // 4th sample (1 s): fire
+    feed(30.f, 8);   assert(temp.hot(t));         // between +7 and +10: stays hot
+    feed(26.f, 3);   assert(temp.hot(t));
+    feed(26.f, 1);   assert(!temp.hot(t));        // below +7 for 1 s: cleared
+    feed(32.4f, 8);  assert(!temp.hot(t));        // must reach room + 10 again
+    assert(!temp.hot(t + 2000));                  // stale reading is not hot
+    // A warm object in view at power-up restarts the calibration window.
+    TemperatureState warm;
+    warm.update(22.6f, 22, true, 0);
+    warm.update(40.f, 22, true, 250);             // spread > 2 C: restart from here
+    for (uint32_t u = 500; u <= 10000; u += 250) warm.update(40.f, 22, true, u);
+    assert(!warm.calibrated() && warm.calibrationRestarts() == 1);
+    warm.update(40.f, 22, true, 10250);
+    assert(warm.calibrated() && fabsf(warm.room() - 40.f) < 0.01f);
   }
   puts("Control tests passed (12 scenario groups)");
 }

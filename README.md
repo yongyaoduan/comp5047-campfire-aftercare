@@ -7,7 +7,7 @@ Raspberry Pi vision and Bluetooth LE, FireBeetle ESP32-E two-LED control, spoken
 | Output | Meaning |
 |---|---|
 | Green / GPIO16 | Person detected |
-| Red / GPIO17 | Fire: object temperature reaches 45°C, stays on until it falls below 40°C |
+| Red / GPIO17 | Fire: object temperature at least 10°C above room temperature for 1 s; off once below room + 7°C for 1 s |
 | Audio / GPIO25 DAC1 | Spoken prompts and alarm |
 | Pump / GPIO26 | MOSFET control signal |
 
@@ -34,7 +34,7 @@ Playback is offline. The WAV files and generated `AudioSamples.h` are included; 
 7. Low water blocks every spray but never silences the station: with someone in view it asks for water; with nobody in view the alarm keeps repeating.
 8. Re-ignition after an automatic spray restarts the cycle at step 4. Invalid/stale sensor readings, BLE disconnect, stale command stream, or STOP block spraying and reset the sequence.
 
-Fire detection uses hysteresis (on at 45°C, off below 40°C) so the pump does not chatter around one threshold. The Pi always looks for at least four hands, so any visible person's heart counts even with `--max-people 1`.
+Room temperature is the mean IR object reading over the first 10 s after power-up (restarted if the readings spread by more than 2°C), so keep anything warm away from the IR window at start-up. Fire detection uses hysteresis (on at room + 10°C, off below room + 7°C, each held for 1 s) so the pump does not chatter around one threshold. **Start-up standby:** for about 30 s the station does nothing; once the thermometer is calibrated and the water sensor answers, both LEDs blink twice. Put the water-level sensor in the tank only after the double blink. A fast-flickering red LED after 30 s means a sensor is not answering. The Pi always looks for at least four hands, so any visible person's heart counts even with `--max-people 1`.
 
 Temperature and water are sampled in a separate task roughly every 250 ms, so cooling is checked more frequently than the report's 5-second requirement. The water threshold is the reference raw value >100; two valid samples settle wet/dry. Isolated upper drops are ignored for height, but a film on the bottom segment can still look like water. Water-height precision is not 100 ms: that is a diagnostic polling interval, not measurement accuracy.
 
