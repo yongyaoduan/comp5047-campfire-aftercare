@@ -15,7 +15,7 @@ Raspberry Pi vision and Bluetooth LE, FireBeetle ESP32-E two-LED control, spoken
 
 The committed English WAV files and flash-resident samples are generated with macOS Samantha at 100 words/minute, then high-passed, compressed to full DAC swing and played 5% slower (15.2 kHz) for a calm, loud voice (`firebeetle/audio/build_audio.py`):
 
-- [I need some water.](firebeetle/audio/water.wav) — repeats every 5 seconds while the tank is low (fewer than the bottom 2 of the sensor's 20 sections wet, under about 10 mm) and someone is in view.
+- [I need some water.](firebeetle/audio/water.wav) — repeats every 5 seconds while the tank is low (fewer than the bottom 5 of the sensor's 20 sections wet, under about 25 mm) and someone is in view. A low tank does not block the pump.
 - [Fire's still burning. Make a heart, I'll put it out.](firebeetle/audio/fire.wav) — once, when someone comes back during the alarm or an automatic spray.
 - [I love you too.](firebeetle/audio/love.wav) — once per new heart gesture.
 - [Putting the fire out.](firebeetle/audio/spray.wav) — once, when an automatic spray starts.
@@ -29,9 +29,9 @@ Playback is offline. The WAV files and generated `AudioSamples.h` are included; 
 2. Fire with people in view is normal use: no sound, no pump.
 3. **A heart works at any time.** While any visible person holds a two-hand heart and the bowl is hot, the pump runs; it stops the moment the hands drop (the BLE heart message expires 0.8 s after the last heartbeat; with the Pi 3B+ at ~1 FPS the observed stop is about 2 s after the hands actually drop).
 4. Fire with nobody in view (including nobody ever seen): wait 5 s silently (shortened for the demo; a field version would wait longer). Coming back within 5 s: nothing happens.
-5. Then alarm 1 s on / 1 s off, at most three times. Coming back during the alarm stops it and plays the fire prompt once; after that it is normal use.
+5. Then alarm 1 s on / 1 s off, three times before the automatic spray (at most 10 bursts per episode, see step 7). Coming back during the alarm stops it and plays the fire prompt once; after that it is normal use.
 6. Nobody back after the third pause (11 s from absence): "Putting the fire out", then spray until the bowl falls below room + 7°C. A person walking in without a heart stops the pump immediately.
-7. Low water blocks every spray but never silences the station: with someone in view it asks for water; with nobody in view the alarm keeps repeating.
+7. Low water (fewer than 5 sections) is only spoken: with someone in view it asks for water, and the pump keeps working while any water is detected. Only an empty tank (no wet section) blocks every spray; with nobody in view the alarm then keeps calling, up to 10 bursts in all, and the automatic spray starts once water is added.
 8. Re-ignition after an automatic spray restarts the cycle at step 4. Invalid/stale sensor readings, BLE disconnect, stale command stream, or STOP block spraying and reset the sequence.
 
 Room temperature is the mean IR object reading over the first 10 s after power-up (restarted if the readings spread by more than 2°C), so keep anything warm away from the IR window at start-up. Fire detection uses hysteresis (on at room + 10°C, off below room + 7°C, each held for 1 s) so the pump does not chatter around one threshold. **Start-up standby:** for about 10 s the station does nothing and both LEDs blink; once the thermometer is calibrated and the water sensor answers, the blinking stops. Put the water-level sensor in the tank only after the blinking stops. A fast-flickering red LED after 30 s means a sensor is not answering. The Pi always looks for at least four hands, so any visible person's heart counts even with `--max-people 1`.

@@ -11,7 +11,7 @@
 #include "AudioPlayer.h"
 
 // Two LEDs on the short header row (easy to solder): green person, red fire.
-// Tank low is spoken ("I need some more water"); a held heart is answered by voice and water.
+// Tank low (< 5 sections) is spoken ("I need some water"); only an empty tank blocks the pump; a held heart is answered by voice and water.
 constexpr uint8_t GREEN = 16, RED = 17, PUMP = 26;
 static const char *SERVICE_UUID = "A6E40001-B5A3-F393-E0A9-E50E24DCCA9E";
 static const char *COMMAND_UUID = "A6E40002-B5A3-F393-E0A9-E50E24DCCA9E";
@@ -206,6 +206,7 @@ void loop() {
   input.hot = temperature.hot(now);
   input.waterKnown = lastWaterValid && water.fresh(now);
   input.lowWater = water.dry(now);
+  input.emptyWater = water.empty(now);
   input.fullWater = water.full(now);
   // Require two valid samples before allowing pumping (settled wet or dry).
   input.waterKnown = input.waterKnown && water.settled() && !water.suspect();  // film suspected: unknown
@@ -219,9 +220,9 @@ void loop() {
   }
   if (uint32_t(now - lastReport) >= 1000) {
     lastReport = now;
-    Serial.printf("mode=%d link=%d person=%d heart=%d temp_ok=%d object_C=%.2f room_C=%.2f water_ok=%d level_mm=%u low=%d full=%d suspect=%d pump=%d GR=%d%d\n",
+    Serial.printf("mode=%d link=%d person=%d heart=%d temp_ok=%d object_C=%.2f room_C=%.2f water_ok=%d level_mm=%u low=%d empty=%d full=%d suspect=%d pump=%d GR=%d%d\n",
       int(out.mode), link, input.person, input.heart, input.temperatureKnown,
-      temperature.object(), temperature.room(), input.waterKnown, water.levelMM(), input.lowWater, input.fullWater, water.suspect(),
+      temperature.object(), temperature.room(), input.waterKnown, water.levelMM(), input.lowWater, input.emptyWater, input.fullWater, water.suspect(),
       out.pump, out.green, out.red);
     if (printRaw) {
       Serial.print("water_raw (bottom->top):");
