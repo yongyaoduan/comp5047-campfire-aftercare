@@ -1,43 +1,46 @@
-# v3 更新：元器件与插座空间
+# Simple enclosure v3 (3D-print design; historical — the final build is the v4 plywood box)
 
-水箱盖以上预留100×100mm占地、150mm净高（默认位置x25..125、y25..125、z156..306）。预览粉色透明区域为预留空域，不是新增隔板或盒子。现有电路仍固定在盖子上。整体外壳提高到330×230×383mm（不含固定环）；漏斗最低参考位置324mm，距预留区顶端约18mm。建议这一高度作为初版，实测插头和线缆转弯后可缩小。
+> This folder is the v3 design for a 3D-printed shell. It was replaced by the v4 7 mm plywood box (see the report, §11) because printing needed about 50 h and the brackets did not align as an assembly. It is kept as a record of the design process. The dimensions below were provisional and were never physically tested.
 
-100×100mm不能保证放得下普通长条插排，也不能保证容纳照片里全部元器件。它只是一块额外预留区域；现有器件仍利用整个水箱盖面。请测插排外壳长宽高及插头插入后的总高度，电源线弯曲和USB连接也要计算。若插排任一边超过100mm，可利用剩余盖面调位或放到外壳外面。
+## v3 update: space for components and the power strip
 
-若“插座”指220–240V市电插排，建议放在盒体外部，盒内仅引入现有5V/12V低压线；本模型没有把靠近进水口的预留空域设计为市电防水电气盒。先断电做漏水检查。
+Above the tank lid a 100 × 100 mm footprint with 150 mm clear height is reserved (default x 25–125, y 25–125, z 156–306). The pink transparent block in the preview is that reserved space, not a new divider or box. The existing circuit is still fixed to the lid. The shell grows to 330 × 230 × 383 mm (without the fixing ring); the lowest reference point of the funnel is at 324 mm, about 18 mm above the top of the reserved space. Treat this height as a first version; it can shrink once the plugs and cable bends have been measured.
 
-# 简化盒体 v3 / Simple enclosure
+100 × 100 mm does not guarantee room for an ordinary long power strip, nor for every component in the photos. It is only an extra reserved area; the components still use the whole tank lid. Measure the power strip housing (length, width, height and the total height with plugs inserted), and allow for power-cord bends and USB connections. If any side of the strip exceeds 100 mm, move it on the remaining lid area or place it outside the shell.
 
-按IMG_0922照片和用户修正：取消所有内部隔板、电子托盘、独立湿通道。外壳只包住水箱与盖上元件，顶部支撑购买的漏斗。v1保留供历史参考，制作本版请使用本目录。
+If "power strip" means a 220–240 V mains strip, keep it outside the box and bring only the existing 5 V / 12 V low-voltage leads inside; this model does not make the reserved space near the water inlet a waterproof mains enclosure. Do a leak check with the power off first.
 
-## 尺寸和结构
+## Simple enclosure v3
 
-水箱290×190×150 mm（用户实测）；打印版外壳330×230×383 mm，含顶部6mm固定环最高389mm。底板3mm，箱体内净324×224mm。水箱四周约17mm间隙，可放盖子凸缘和管线，但仍需复测锁扣凸出尺寸。
+Based on photo IMG_0922 and the team's corrections: all internal dividers, electronics trays and the separate wet channel are removed. The shell only encloses the tank and the parts on its lid, and the top supports the purchased funnel. v1 is kept for reference; use this folder for this version.
 
-实际盖子直接作为电子安装面。电路板使用绝缘底座、树莓派保留现有外壳，再把底座粘到盖子上；不另做托盘。示意图中的电子方块仅表示位置，不代表实物孔位。孔位与USB插头空间由实际摆放决定。
+## Dimensions and structure
 
-顶部大圆孔直径190mm，中心x220,y115mm（坐标原点为前左角）。其上装一个外径210、内径172、厚6mm的平面适配环，以四个M3螺栓连接顶板。孔在半径100mm圆上，角度45/135/225/315度。漏斗锥面靠近上沿处坐在环内，露出上沿约5mm；加薄橡胶衬条后用可拆硅胶点/实际漏斗边缘卡扣限位。不能仅凭圆孔保证它不会被拔出。
+Tank 290 × 190 × 150 mm (measured); printed shell 330 × 230 × 383 mm, 389 mm high including the 6 mm top fixing ring. Base 3 mm; inside 324 × 224 mm. About 17 mm clearance around the tank for the lid flange and tubing; re-measure how far the clip latches stick out.
 
-**漏斗未购买或测量：180mm口径、70mm锥体高度、172mm安装处直径均为暂定。** 实物测好后修改build.py中的孔径和参考体。关键测量是“上沿以下5mm处的外径”，不是出口管径。最终取环孔径=该处外径+实测装配间隙（建议先从直径0.6mm间隙试样）。若漏斗没有宽边或锥度不匹配，应改环，不能强行压入。
+The tank lid itself is the electronics mounting surface. Boards sit on insulating standoffs, the Raspberry Pi stays in its own case, and the standoffs are glued to the lid; there is no separate tray. The electronics blocks in the drawings only show positions, not real hole patterns. Hole positions and USB plug space follow the real layout.
 
-管子从漏斗下端直接接入水箱盖，在盖上预留独立入水区（默认x220,y115，至少40mm直径不放电子元件），软管与盖孔使用匹配接头和垫圈。管接头必须按实际管径采购。示意用竖直管；如果与已有元件冲突，可侧移入水孔并用短软管连接。盖上元件不能占满这块区域。
+The large top hole is 190 mm in diameter, centred at x 220, y 115 mm (origin at the front-left corner). A flat adapter ring (outer 210, inner 172, 6 mm thick) sits on it, fixed to the top panel with four M3 bolts on a 100 mm radius at 45/135/225/315°. The funnel cone sits in the ring near its rim, with about 5 mm of the rim showing; with a thin rubber strip it is held by removable silicone dots or by the funnel's own rim. The round hole alone does not stop it being pulled out.
 
-设计参考：水箱顶部z153mm，电子元件示意最高z186mm，另预留100×100×150mm空间（z156..306mm），漏斗锥体下端z324mm。最高实际元件若超过306mm，复核与漏斗底部的间距；需要时增高外壳。取出水箱前先拆前板，断开入水管和线缆，不能带管硬拉盖子。
+**The funnel had not been bought or measured: the 180 mm mouth, 70 mm cone height and 172 mm seat diameter are provisional.** After measuring the real funnel, change the hole and reference body in `build.py`. The key measurement is the outer diameter 5 mm below the rim, not the outlet diameter. Ring bore = that diameter + measured fit clearance (start with a 0.6 mm diameter test piece). If the funnel has no rim or the taper does not match, change the ring; do not force it in.
 
-## 两种制作
+The tube runs from the funnel outlet straight into the tank lid. Keep a separate inlet area on the lid (default x 220, y 115, at least 40 mm diameter, no electronics), and use a matching fitting and washer between tube and lid hole; buy the fitting to the real tube size. The drawing shows a vertical tube; if it clashes with existing parts, move the inlet sideways and connect it with a short hose. Do not fill this area with components.
 
-**优先木板：** `wood_cut_list.csv`，6mm胶合板。只有底、顶、前、后、左、右六块大板；前板可拆，其余胶合/角码固定。木板外高386mm，内部318×218mm。顶板按上述圆孔及四螺孔加工。打印漏斗适配环即可（木板角部可用现成角码）。无需打印全部外壳。面板厚度变化时重算侧板深度。
+Design references: tank top z 153 mm, highest component (schematic) z 186 mm, reserved 100 × 100 × 150 mm space (z 156–306 mm), funnel cone bottom z 324 mm. If the tallest real component exceeds 306 mm, re-check the clearance to the funnel and raise the shell if needed. Before lifting the tank out, remove the front panel and disconnect the inlet tube and cables; do not pull the lid out with the tube attached.
 
-**全打印：** `stl/`含20类零件，按`parts.csv`数量。底/顶各分两半；墙板分上下两段，以适应256mm打印平台，内部没有中间水平板。M3角码用于底/顶与墙板连接；4个接缝条连接顶/底左右拼缝（每块2个，端孔40mm间距）；6个接缝条旋转90度连接墙板上下拼缝（额外孔在各墙板本地x30，世界z170/210，40mm间距）；另有2个备用。前板保留螺栓拆卸。前/后左右接缝可在试装后粘接，或加背衬连接。角码和面板局部孔位需试装定位，必要时补钻，不能保证免修配严丝合缝。
+## Two ways to build it
 
-STL使用3.4mm通孔配M3螺栓螺母，不是自攻孔。模型未含螺钉等全部五金。STL全部通过封闭网格、正体积和256mm尺寸检查；没有实物承重、漏水或配合验证。先打印M3_fit_coupon及一个角码、实际漏斗的环试样。
+**Plywood (preferred):** `wood_cut_list.csv`, 6 mm plywood. Only six large panels: base, top, front, back, left and right. The front panel is removable; the others are glued or fixed with corner brackets. Outside height 386 mm, inside 318 × 218 mm. Cut the top panel with the round hole and four bolt holes as above. Only the funnel adapter ring needs printing (the wooden corners can use bought brackets). If the panel thickness changes, recalculate the side-panel depth.
 
-底板中缝承重未经验证，满水之前做负载试验；整块木底板更适合承重。水箱盖打孔后先断电注水确认接头密封，确认没有溢水经过电子元件，再安装元件。外壳本身没有做防水密封，也不替代带盖水箱。
+**Fully printed:** `stl/` holds 20 part types; quantities in `parts.csv`. Base and top are each printed in two halves; the walls in an upper and a lower section to fit a 256 mm print bed, with no horizontal shelf inside. M3 corner brackets join base/top to the walls; 4 seam strips join the left and right seams of the top and base (2 each, end holes 40 mm apart); 6 seam strips rotated 90° join the upper and lower wall sections (extra holes at local x 30 on each wall, world z 170/210, 40 mm apart); 2 are spares. The front panel stays bolted so it can be removed. Front/back and side seams can be glued after a trial fit, or joined with backing strips. Bracket and panel holes must be located at the trial fit and drilled if needed; a perfect fit without adjustment is not guaranteed.
 
-## 文件
+The STLs use 3.4 mm through-holes for M3 bolts and nuts, not self-tapping holes. Not all hardware is modelled. All STLs passed closed-mesh, positive-volume and 256 mm size checks; load, leak and fit were not tested physically. Print the M3_fit_coupon, one corner bracket and a ring test piece for the real funnel first.
 
-preview.png：基于实际CAD的剖面图（移除前/左墙），漏斗、水箱、电子块仅作空间参考。
-simple_enclosure.step：可编辑布局参考；不要整体打印。
-stl/*.stl：分件模型。parts.csv：数量与尺寸。wood_cut_list.csv：木板版开料。checks.json：网格检查结果。build.py：参数化源文件；Python3.12、cadquery、trimesh、matplotlib可重建。
+Load on the base centre seam is unverified; do a load test before filling with water. A single wooden base is better for load. After drilling the tank lid, fill it with the power off to check the fittings seal and that no overflow reaches the electronics, then fit the components. The shell itself is not waterproof and does not replace the lidded tank.
 
-Simple version: no internal shelves. Electronics mount on the actual tank lid. Bought funnel sits recessed in a replaceable top ring; one hose runs straight to the tank lid. Funnel fit and actual electronics clearance remain to be measured. Prefer six wood panels plus a printed adapter ring for the quickest build.
+## Files
+
+- `preview.png`: section view from the real CAD (front and left walls removed); funnel, tank and electronics blocks are only spatial references.
+- `simple_enclosure.step`: editable layout reference; do not print it as one piece.
+- `stl/*.stl`: individual parts. `parts.csv`: quantities and sizes. `wood_cut_list.csv`: plywood cut list. `checks.json`: mesh-check results. `build.py`: parametric source; rebuild with Python 3.12, cadquery, trimesh and matplotlib.
+- `three_view_english.py` and `drawings_english/`: English three-view drawings (`dimension_drawings.py` is the older version with Chinese labels).
